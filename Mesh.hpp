@@ -7,6 +7,8 @@ namespace he
 {
   class Mesh
   {
+    friend class MeshLoader;
+
   public:
     ~Mesh();
 
