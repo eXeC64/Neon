@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 #include <glm/vec2.hpp>
+#include <png.h>
+#include <stdio.h>
+#include <string.h>
 
 namespace
 {
@@ -137,6 +140,58 @@ namespace he
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     return pMesh;
+  }
+
+  Texture* Loader::LoadPNG(const std::string &path)
+  {
+    FILE *fp = fopen(path.c_str(), "rb");
+
+    if(!fp)
+      return nullptr;
+
+    png_structp pPNG = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if(!pPNG)
+    {
+      fclose(fp);
+      return nullptr;
+    }
+
+    png_infop pInfo = png_create_info_struct(pPNG);
+    if(!pInfo)
+    {
+      fclose(fp);
+      png_destroy_read_struct(&pPNG, NULL, NULL);
+      return nullptr;
+    }
+
+    png_init_io(pPNG, fp);
+    png_read_png(pPNG, pInfo, PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING | PNG_TRANSFORM_EXPAND, NULL);
+    png_uint_32 width, height;
+    png_get_IHDR(pPNG, pInfo, &width, &height, NULL, NULL, NULL, NULL, NULL);
+    unsigned int bytesPerRow = png_get_rowbytes(pPNG, pInfo);
+    std::vector<char> data(bytesPerRow*height);
+    png_bytepp rowPointers = png_get_rows(pPNG, pInfo);
+
+    for (int i = 0; i < height; i++)
+      memcpy(&data[0]+(bytesPerRow * (height-1-i)), rowPointers[i], bytesPerRow);
+
+    png_destroy_read_struct(&pPNG, &pInfo, NULL);
+
+    fclose(fp);
+
+    Texture *pTex = new Texture();
+    pTex->m_width = width;
+    pTex->m_height = width;
+    glGenTextures(1, &pTex->m_glTexture);
+    glBindTexture(GL_TEXTURE_2D, pTex->m_glTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return pTex;
   }
 
   Mesh* Loader::Plane()
