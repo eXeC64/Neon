@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <glm/mat4x4.hpp>
 #include "OpenGL.hpp"
 
@@ -24,7 +25,10 @@ namespace he
     void AddLight(glm::vec3 pos, glm::vec3 rgb, double radius); //adds a light to this frame
 
   private:
+    GLuint LoadShader(const std::string &vsPath, const std::string &fsPath);
+
     bool m_bIsInit;
     glm::mat4 m_matProjection; //The camera's projection matrix
+    GLuint m_shader;
   };
 }

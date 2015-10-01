@@ -39,6 +39,8 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
+
   he::Mesh *pMesh = he::MeshLoader::LoadOBJ("/home/harry/monkey.obj");
   glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
     * glm::scale(glm::mat4(1.0f), glm::vec3(1));
@@ -48,6 +50,8 @@ int main(int argc, char **argv)
   {
     double curtime = SDL_GetTicks() / 1000.0;
 
+    pRenderer->SetProjectionMatrix(proj
+        * glm::translate(glm::mat4(1.0), glm::vec3(0,0,sin(3*curtime)-5)));
     matMeshPos = glm::rotate(glm::mat4(1.0), (float)curtime, glm::vec3(0,1,0));
 
     pRenderer->BeginFrame();
