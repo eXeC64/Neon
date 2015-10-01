@@ -27,6 +27,14 @@ int main(int argc, char **argv)
 
   SDL_GLContext GLcontext = SDL_GL_CreateContext(pWindow);
 
+  std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+  /* std::cout << "Extensions: " << std::endl; */
+  /* GLint numExts; */
+  /* glGetIntegerv(GL_NUM_EXTENSIONS, &numExts); */
+  /* for(int i = 0; i < numExts; ++i) */
+  /*   std::cout << " * " << glGetStringi(GL_EXTENSIONS, i) << "\n"; */
+  /* std::cout << std::flush; */
+
   GLuint VertexArrayID;
   glGenVertexArrays(1, &VertexArrayID);
   glBindVertexArray(VertexArrayID);
