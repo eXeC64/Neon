@@ -10,6 +10,5 @@ namespace he
   {
   public:
     static Mesh* LoadOBJ(const std::string &path);
-    static Mesh* Dummy();
   };
 }
