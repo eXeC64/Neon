@@ -27,6 +27,10 @@ int main(int argc, char **argv)
 
   SDL_GLContext GLcontext = SDL_GL_CreateContext(pWindow);
 
+  GLuint VertexArrayID;
+  glGenVertexArrays(1, &VertexArrayID);
+  glBindVertexArray(VertexArrayID);
+
   he::Renderer* pRenderer = new he::Renderer();
 
   if(!pRenderer->Init(1280,720))
