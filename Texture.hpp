@@ -6,6 +6,7 @@ namespace he
 {
   class Texture
   {
+    friend class Renderer;
   public:
     ~Texture();
     int Width();
