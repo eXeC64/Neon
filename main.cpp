@@ -1,5 +1,13 @@
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <math.h>
+
+#include "OpenGL.hpp"
+#include "Renderer.hpp"
+#include "MeshLoader.hpp"
 
 int main(int argc, char **argv)
 {
@@ -18,15 +26,30 @@ int main(int argc, char **argv)
   }
 
   SDL_GLContext GLcontext = SDL_GL_CreateContext(pWindow);
-  glClearColor(0,0,0,1);
+
+  he::Renderer* pRenderer = new he::Renderer();
+
+  if(!pRenderer->Init(1280,720))
+  {
+    std::cerr << "Failed to init renderer." << std::endl;
+    return 1;
+  }
+
+  he::Mesh *pMesh = he::MeshLoader::Dummy();
+  glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
+    * glm::scale(glm::mat4(1.0f), glm::vec3(1));
 
   bool quit = false;
   while(!quit)
   {
     double curtime = SDL_GetTicks() / 1000.0;
 
-    glClear(GL_COLOR_BUFFER_BIT);
-    //Draw here
+    matMeshPos = glm::rotate(glm::mat4(1.0), (float)curtime, glm::vec3(0,1,0));
+
+    pRenderer->BeginFrame();
+    pRenderer->AddMesh(pMesh, matMeshPos);
+    pRenderer->EndFrame();
+
     SDL_GL_SwapWindow(pWindow);
     SDL_Delay(1);
 
@@ -42,6 +65,9 @@ int main(int argc, char **argv)
       }
     }
   }
+
+  delete pMesh;
+  delete pRenderer;
 
   SDL_GL_DeleteContext(GLcontext);
   SDL_DestroyWindow(pWindow);
