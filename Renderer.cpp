@@ -53,6 +53,8 @@ namespace he
   void Renderer::AddMesh(Mesh *pMesh, glm::mat4 matPosition)
   {
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
