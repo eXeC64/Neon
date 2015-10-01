@@ -21,7 +21,9 @@ namespace he
 
   bool Renderer::Init(int width, int height)
   {
-    m_shader = LoadShader("simple.vs", "simple.fs");
+    m_shader = LoadShader("vert.glsl", "frag.glsl");
+    if(!m_shader)
+      return false;
 
     glClearColor(0,0,0,1);
     glClearDepth(1.0);
