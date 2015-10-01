@@ -6,7 +6,7 @@
 
 namespace he
 {
-  class MeshLoader
+  class Loader
   {
   public:
     static Mesh* LoadOBJ(const std::string &path);

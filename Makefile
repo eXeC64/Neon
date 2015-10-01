@@ -3,7 +3,7 @@
 CXXFLAGS = -W -Wall -std=c++14 `sdl2-config --cflags`
 LDFLAGS = -lGL `sdl2-config --libs`
 
-SRCS = main.cpp Renderer.cpp Mesh.cpp MeshLoader.cpp Texture.cpp
+SRCS = main.cpp Renderer.cpp Mesh.cpp Loader.cpp Texture.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 PROG = helium

@@ -7,7 +7,7 @@
 
 #include "OpenGL.hpp"
 #include "Renderer.hpp"
-#include "MeshLoader.hpp"
+#include "Loader.hpp"
 
 int main(int argc, char **argv)
 {
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
   glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
 
-  he::Mesh *pMesh = he::MeshLoader::LoadOBJ("/home/harry/monkey.obj");
+  he::Mesh *pMesh = he::Loader::LoadOBJ("/home/harry/monkey.obj");
   glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
     * glm::scale(glm::mat4(1.0f), glm::vec3(1));
 
