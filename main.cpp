@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  he::Mesh *pMesh = he::MeshLoader::Dummy();
+  he::Mesh *pMesh = he::MeshLoader::LoadOBJ("/home/harry/monkey.obj");
   glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
     * glm::scale(glm::mat4(1.0f), glm::vec3(1));
 
