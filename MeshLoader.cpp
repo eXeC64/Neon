@@ -110,7 +110,7 @@ namespace he
       //Do we have a valid uv index?
       if(idx[1] >= 0)
         for(int i = 0; i < 2; ++i)
-          data.push_back(vertices[idx[1]][i]);
+          data.push_back(uvs[idx[1]][i]);
       else
         for(int i = 0; i < 2; ++i)
           data.push_back(0); //Just set tex coords to 0
@@ -118,7 +118,7 @@ namespace he
       //Do we have valid normal index?
       if(idx[2] >= 0)
         for(int i = 0; i < 3; ++i)
-          data.push_back(vertices[idx[2]][i]);
+          data.push_back(normals[idx[2]][i]);
       else
         for(int i = 0; i < 3; ++i)
           data.push_back(i == 0 ? 1 : 0); //Just point towards +x instead
