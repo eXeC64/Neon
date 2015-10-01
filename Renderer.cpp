@@ -12,7 +12,8 @@ namespace he
 
   Renderer::Renderer() :
     m_bIsInit(false),
-    m_bufDiffuse(0), m_bufNormal(0), m_bufDepth(0), m_bufFBO(0)
+    m_bufDiffuse(0), m_bufNormal(0), m_bufDepth(0), m_bufFBO(0),
+    m_shader(0)
   {};
 
   Renderer::~Renderer()
