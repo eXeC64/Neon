@@ -76,8 +76,17 @@ namespace he
     Texture *pDiffuse = pMat->m_pDiffuse;
     if(pDiffuse)
     {
+      glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, pMat->m_pDiffuse->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shader, "diffuse"), 0);
+    }
+
+    Texture *pNormal = pMat->m_pNormal;
+    if(pNormal)
+    {
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, pMat->m_pNormal->m_glTexture);
+      glUniform1i(glGetUniformLocation(m_shader, "normal"), 1);
     }
 
     glDrawArrays(GL_TRIANGLES, 0, pMesh->m_iNumTris*3);
