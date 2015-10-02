@@ -19,6 +19,8 @@ namespace he
 
   Renderer::~Renderer()
   {
+    if(m_shader)
+      glDeleteProgram(m_shader);
   }
 
   bool Renderer::Init(int width, int height)
