@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   he::Texture *pDiffuse = he::Loader::LoadPNG("diffuse.png");
   he::Texture *pNormal = he::Loader::LoadPNG("normal.png");
   he::Material mat(pDiffuse, pNormal);
-  he::Mesh *pMesh = he::Loader::LoadOBJ("/home/harry/monkey.obj");
+  he::Mesh *pMesh = he::Loader::LoadOBJ("monkey.obj");
   glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
     * glm::scale(glm::mat4(1.0f), glm::vec3(1));
 
