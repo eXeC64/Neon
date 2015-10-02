@@ -101,7 +101,7 @@ namespace he
     glFrontFace(GL_CCW);
 
 
-    m_shader = LoadShader("vert.glsl", "frag.glsl");
+    m_shader = LoadShader("shaders/mesh_vert.glsl", "shaders/mesh_frag.glsl");
     if(!m_shader)
       return false;
 
