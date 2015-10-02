@@ -41,10 +41,6 @@ int main(int argc, char **argv)
   /*   std::cout << " * " << glGetStringi(GL_EXTENSIONS, i) << "\n"; */
   /* std::cout << std::flush; */
 
-  GLuint VertexArrayID;
-  glGenVertexArrays(1, &VertexArrayID);
-  glBindVertexArray(VertexArrayID);
-
   he::Renderer* pRenderer = new he::Renderer();
 
   if(!pRenderer->Init(1280,720))
@@ -55,8 +51,9 @@ int main(int argc, char **argv)
 
   glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
 
-  he::Texture *pTex = he::Loader::LoadPNG("/home/harry/test.png");
-  he::Material mat(pTex);
+  he::Texture *pDiffuse = he::Loader::LoadPNG("diffuse.png");
+  he::Texture *pNormal = he::Loader::LoadPNG("normal.png");
+  he::Material mat(pDiffuse, pNormal);
   he::Mesh *pMesh = he::Loader::LoadOBJ("/home/harry/monkey.obj");
   glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
     * glm::scale(glm::mat4(1.0f), glm::vec3(1));
@@ -67,7 +64,7 @@ int main(int argc, char **argv)
     double curtime = SDL_GetTicks() / 1000.0;
 
     pRenderer->SetProjectionMatrix(proj
-        * glm::translate(glm::mat4(1.0), glm::vec3(0,0,sin(3*curtime)-5)));
+        * glm::translate(glm::mat4(1.0), glm::vec3(0,0,sin(3*curtime)-3)));
     matMeshPos = glm::rotate(glm::mat4(1.0), (float)curtime, glm::vec3(0,1,0));
 
     pRenderer->BeginFrame();
@@ -90,7 +87,8 @@ int main(int argc, char **argv)
     }
   }
 
-  delete pTex;
+  delete pDiffuse;
+  delete pNormal;
   delete pMesh;
   delete pRenderer;
 
