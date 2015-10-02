@@ -35,7 +35,7 @@ namespace he
     GLuint m_shader;
     GLuint m_texDiffuse;
     GLuint m_texNormal;
-    GLuint m_texUV;
+    GLuint m_texWorldPos;
     GLuint m_texDepth;
     GLuint m_FBO;
   };
