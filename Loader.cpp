@@ -172,7 +172,7 @@ namespace he
     std::vector<char> data(bytesPerRow*height);
     png_bytepp rowPointers = png_get_rows(pPNG, pInfo);
 
-    for (int i = 0; i < height; i++)
+    for (unsigned int i = 0; i < height; i++)
       memcpy(&data[0]+(bytesPerRow * (height-1-i)), rowPointers[i], bytesPerRow);
 
     png_destroy_read_struct(&pPNG, &pInfo, NULL);

@@ -11,6 +11,9 @@
 
 int main(int argc, char **argv)
 {
+  (void)argc;
+  (void)argv;
+
   if(SDL_Init(SDL_INIT_VIDEO) < 0)
   {
     std::cerr << "SDL Failed to Init: " << SDL_GetError() << std::endl;

@@ -80,6 +80,9 @@ namespace he
   void Renderer::AddLight(glm::vec3 pos, glm::vec3 rgb, double radius)
   {
     //add this light to the list to be rendered this frame
+    (void)pos;
+    (void)rgb;
+    (void)radius;
   }
 
   GLuint Renderer::LoadShader(const std::string &vsPath, const std::string &fsPath)
