@@ -50,22 +50,20 @@ int main(int argc, char **argv)
   }
 
   glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
+  pRenderer->SetProjectionMatrix(proj);
 
   he::Texture *pDiffuse = he::Loader::LoadPNG("diffuse.png");
   he::Texture *pNormal = he::Loader::LoadPNG("normal.png");
   he::Material mat(pDiffuse, pNormal);
   he::Mesh *pMesh = he::Loader::LoadOBJ("monkey.obj");
-  glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,0))
-    * glm::scale(glm::mat4(1.0f), glm::vec3(1));
 
   bool quit = false;
   while(!quit)
   {
     double curtime = SDL_GetTicks() / 1000.0;
 
-    pRenderer->SetProjectionMatrix(proj
-        * glm::translate(glm::mat4(1.0), glm::vec3(0,0,sin(3*curtime)-3)));
-    matMeshPos = glm::rotate(glm::mat4(1.0), (float)curtime, glm::vec3(0,1,0));
+    glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,sin(3*curtime)-3))
+        * glm::rotate(glm::mat4(1.0), (float)curtime, glm::vec3(0,1,0));
 
     pRenderer->BeginFrame();
     pRenderer->AddMesh(pMesh, &mat, matMeshPos);
