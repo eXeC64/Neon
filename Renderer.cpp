@@ -55,23 +55,34 @@ namespace he
     m_matProjection = matProjection;
   }
 
-  void Renderer::AddMesh(Mesh *pMesh, glm::mat4 matPosition)
+  void Renderer::AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition)
   {
+    if(!pMesh || !pMat)
+      return;
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+
     glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
 
     glUseProgram(m_shader);
-    GLuint uPos = glGetUniformLocation(m_shader, "pos");
-    GLuint uView = glGetUniformLocation(m_shader, "view");
-    glUniformMatrix4fv(uPos, 1, GL_FALSE, &matPosition[0][0]);
-    glUniformMatrix4fv(uView, 1, GL_FALSE, &m_matProjection[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "pos"), 1, GL_FALSE, &matPosition[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "view"), 1, GL_FALSE, &m_matProjection[0][0]);
+
+    Texture *pDiffuse = pMat->m_pDiffuse;
+    if(pDiffuse)
+    {
+      glBindTexture(GL_TEXTURE_2D, pMat->m_pDiffuse->m_glTexture);
+      glUniform1i(glGetUniformLocation(m_shader, "diffuse"), 0);
+    }
 
     glDrawArrays(GL_TRIANGLES, 0, pMesh->m_iNumTris*3);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);

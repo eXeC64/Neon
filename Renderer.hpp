@@ -22,8 +22,8 @@ namespace he
 
     void SetProjectionMatrix(glm::mat4 matProjection);
 
-    void AddMesh(Mesh *pMesh, glm::mat4 matPosition); //adds a mesh to this frame
-    void AddLight(glm::vec3 pos, glm::vec3 rgb, double radius); //adds a light to this frame
+    void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
+    void AddLight(glm::vec3 pos, glm::vec3 rgb, double radius);
 
   private:
     GLuint LoadShader(const std::string &vsPath, const std::string &fsPath);
