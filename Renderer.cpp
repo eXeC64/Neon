@@ -14,7 +14,6 @@ namespace he
 
   Renderer::Renderer() :
     m_bIsInit(false),
-    m_bufDiffuse(0), m_bufNormal(0), m_bufDepth(0), m_bufFBO(0),
     m_shader(0)
   {};
 
@@ -24,10 +23,6 @@ namespace he
 
   bool Renderer::Init(int width, int height)
   {
-    m_shader = LoadShader("vert.glsl", "frag.glsl");
-    if(!m_shader)
-      return false;
-
     glClearColor(0.5,0.5,0.5,1);
     glClearDepth(1.0);
     glDepthFunc(GL_LESS);
@@ -35,6 +30,10 @@ namespace he
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    m_shader = LoadShader("vert.glsl", "frag.glsl");
+    if(!m_shader)
+      return false;
 
     m_bIsInit = true;
     return true;
