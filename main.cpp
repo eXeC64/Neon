@@ -8,6 +8,9 @@
 #include "OpenGL.hpp"
 #include "Renderer.hpp"
 #include "Loader.hpp"
+#include "Mesh.hpp"
+#include "Texture.hpp"
+#include "Material.hpp"
 
 int main(int argc, char **argv)
 {

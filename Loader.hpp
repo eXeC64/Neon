@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Mesh.hpp"
-
 #include <string>
 
 namespace he
 {
+  class Mesh;
+  class Texture;
+
   class Loader
   {
   public:

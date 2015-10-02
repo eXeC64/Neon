@@ -7,6 +7,7 @@
 namespace he
 {
   class Mesh;
+  class Material;
 
   class Renderer
   {

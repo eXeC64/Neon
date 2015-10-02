@@ -1,6 +1,8 @@
 #include "Renderer.hpp"
 
 #include "Mesh.hpp"
+#include "Material.hpp"
+#include "Texture.hpp"
 
 #include <iostream>
 #include <string>

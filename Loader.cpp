@@ -1,5 +1,8 @@
 #include "Loader.hpp"
 
+#include "Mesh.hpp"
+#include "Texture.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <fstream>
