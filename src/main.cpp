@@ -30,6 +30,7 @@ int main(int argc, char **argv)
     std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
     return 1;
   }
+  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   SDL_GLContext GLcontext = SDL_GL_CreateContext(pWindow);
 
@@ -55,15 +56,28 @@ int main(int argc, char **argv)
   he::Material mat(pDiffuse, pNormal);
   he::Mesh *pMesh = he::Loader::LoadOBJ("monkey.obj");
 
+  glm::vec3 cameraPos(0,0,-10);
+  float cameraYaw = 0;
+  float cameraTilt = 0;
+
+  double lastTime = SDL_GetTicks() / 1000.0;
+
   bool quit = false;
   while(!quit)
   {
     double curTime = SDL_GetTicks() / 1000.0;
+    double dt = curTime - lastTime;
+    lastTime = curTime;
+
     glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
-    glm::mat4 tran =
-      glm::translate(glm::mat4(1.0), glm::vec3(0,0,-3)) *
-      glm::rotate(glm::mat4(1.0), (float)(0.5 * curTime) , glm::vec3(0,1,0));
-    pRenderer->SetProjectionMatrix(proj * tran);
+    glm::mat4 rot =
+      glm::rotate(glm::mat4(1.0), cameraTilt, glm::vec3(1,0,0)) *
+      glm::rotate(glm::mat4(1.0), cameraYaw, glm::vec3(0,1,0));
+    glm::mat4 tran = glm::translate(glm::mat4(1.0), cameraPos);
+
+    glm::vec3 cameraNorm(glm::vec4(0,0,1,0) * rot);
+
+    pRenderer->SetProjectionMatrix(proj * rot * tran);
 
     glm::mat4 matMeshPos(1.0);
 
@@ -83,8 +97,29 @@ int main(int argc, char **argv)
         case SDL_QUIT:
           quit = true;
           break;
+        case SDL_MOUSEMOTION:
+          cameraYaw += 0.05 * dt * e.motion.xrel;
+          cameraTilt += 0.05 * dt * e.motion.yrel;
+          break;
       }
     }
+
+    const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
+    float moveSpeed = keyboard[SDL_SCANCODE_LSHIFT] ? 1 : 5;
+    if(keyboard[SDL_SCANCODE_W])
+      cameraPos += glm::vec3(moveSpeed * dt) * cameraNorm;
+    if(keyboard[SDL_SCANCODE_S])
+      cameraPos -= glm::vec3(moveSpeed * dt) * cameraNorm;
+    if(keyboard[SDL_SCANCODE_A])
+      cameraPos -= glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
+    if(keyboard[SDL_SCANCODE_D])
+      cameraPos += glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
+    if(keyboard[SDL_SCANCODE_SPACE])
+      cameraPos -= glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
+    if(keyboard[SDL_SCANCODE_LCTRL])
+      cameraPos += glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
+
+
   }
 
   delete pDiffuse;
