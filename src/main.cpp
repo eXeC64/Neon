@@ -49,10 +49,6 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
-  glm::mat4 tran = glm::rotate(glm::mat4(1.0), 0 * glm::pi<float>(), glm::vec3(0,1,0))
-    * glm::translate(glm::mat4(1.0), glm::vec3(0,0,-5));
-  pRenderer->SetProjectionMatrix(proj * tran);
 
   he::Texture *pDiffuse = he::Loader::LoadPNG("diffuse.png");
   he::Texture *pNormal = he::Loader::LoadPNG("normal.png");
@@ -62,10 +58,14 @@ int main(int argc, char **argv)
   bool quit = false;
   while(!quit)
   {
-    double curtime = SDL_GetTicks() / 1000.0;
+    double curTime = SDL_GetTicks() / 1000.0;
+    glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
+    glm::mat4 tran =
+      glm::translate(glm::mat4(1.0), glm::vec3(0,0,-3)) *
+      glm::rotate(glm::mat4(1.0), (float)(0.5 * curTime) , glm::vec3(0,1,0));
+    pRenderer->SetProjectionMatrix(proj * tran);
 
-    glm::mat4 matMeshPos = glm::translate(glm::mat4(1.0), glm::vec3(0,0,1 + 1*sin(3*curtime)))
-        * glm::rotate(glm::mat4(1.0), (float)curtime * 0, glm::vec3(0,1,0));
+    glm::mat4 matMeshPos(1.0);
 
     pRenderer->BeginFrame();
     pRenderer->AddMesh(pMesh, &mat, matMeshPos);
