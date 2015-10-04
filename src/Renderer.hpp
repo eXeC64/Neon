@@ -32,11 +32,13 @@ namespace he
     int m_width;
     int m_height;
     glm::mat4 m_matProjection; //The camera's projection matrix
-    GLuint m_shader;
+    GLuint m_shdMesh;
+    GLuint m_shdLight;
     GLuint m_texDiffuse;
     GLuint m_texNormal;
     GLuint m_texWorldPos;
     GLuint m_texDepth;
     GLuint m_FBO;
+    Mesh* m_pPlane;
   };
 }

@@ -3,6 +3,7 @@
 #include "Mesh.hpp"
 #include "Material.hpp"
 #include "Texture.hpp"
+#include "Loader.hpp"
 
 #include <iostream>
 #include <string>
@@ -15,18 +16,22 @@ namespace he
   Renderer::Renderer() :
     m_bIsInit(false),
     m_width(0), m_height(0),
-    m_shader(0),
+    m_shdMesh(0),
+    m_shdLight(0),
     m_texDiffuse(0),
     m_texNormal(0),
     m_texWorldPos(0),
     m_texDepth(0),
-    m_FBO(0)
+    m_FBO(0),
+    m_pPlane(nullptr)
   {};
 
   Renderer::~Renderer()
   {
-    if(m_shader)
-      glDeleteProgram(m_shader);
+    if(m_shdMesh)
+      glDeleteProgram(m_shdMesh);
+    if(m_shdLight)
+      glDeleteProgram(m_shdLight);
     if(m_texDiffuse)
       glDeleteTextures(1, &m_texDiffuse);
     if(m_texNormal)
@@ -37,6 +42,8 @@ namespace he
       glDeleteTextures(1, &m_texDepth);
     if(m_FBO)
       glDeleteFramebuffers(1, &m_FBO);
+    if(m_pPlane)
+      delete m_pPlane;
   }
 
   bool Renderer::Init(int width, int height)
@@ -55,18 +62,34 @@ namespace he
 
     glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texDiffuse, 0);
 
     glBindTexture(GL_TEXTURE_2D, m_texNormal);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_texNormal, 0);
 
     glBindTexture(GL_TEXTURE_2D, m_texWorldPos);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_texWorldPos, 0);
 
     glBindTexture(GL_TEXTURE_2D, m_texDepth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texDepth, 0);
 
     GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
@@ -101,8 +124,16 @@ namespace he
     glFrontFace(GL_CCW);
 
 
-    m_shader = LoadShader("shaders/mesh_vert.glsl", "shaders/mesh_frag.glsl");
-    if(!m_shader)
+    m_shdMesh = LoadShader("shaders/mesh_vert.glsl", "shaders/mesh_frag.glsl");
+    if(!m_shdMesh)
+      return false;
+
+    m_shdLight = LoadShader("shaders/light_vert.glsl", "shaders/light_frag.glsl");
+    if(!m_shdLight)
+      return false;
+
+    m_pPlane = Loader::Plane();
+    if(!m_pPlane)
       return false;
 
     m_bIsInit = true;
@@ -112,6 +143,7 @@ namespace he
   void Renderer::BeginFrame()
   {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+
     glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
@@ -119,18 +151,45 @@ namespace he
   void Renderer::EndFrame()
   {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    glClearColor(0.5,0.5,0.5,1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
 
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
-    glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width/2, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    if(false /* debug mode 1 */)
+    {
+      glClearColor(0.5,0.5,0.5,1);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glReadBuffer(GL_COLOR_ATTACHMENT1);
-    glBlitFramebuffer(0, 0, m_width, m_height, 640, 0, m_width, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      glReadBuffer(GL_COLOR_ATTACHMENT0);
+      glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width/2, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-    glReadBuffer(GL_COLOR_ATTACHMENT2);
-    glBlitFramebuffer(0, 0, m_width, m_height, 0, m_height/2, m_width/2, m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      glReadBuffer(GL_COLOR_ATTACHMENT1);
+      glBlitFramebuffer(0, 0, m_width, m_height, 640, 0, m_width, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+      glReadBuffer(GL_COLOR_ATTACHMENT2);
+      glBlitFramebuffer(0, 0, m_width, m_height, 0, m_height/2, m_width/2, m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    }
+    else
+    {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      glUseProgram(m_shdLight);
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, m_texNormal);
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, m_texWorldPos);
+
+      glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
+      glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
+      glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
+      glUniform1i(glGetUniformLocation(m_shdLight, "sampPosition"), 2);
+
+      glEnableVertexAttribArray(0);
+      glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
+      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+      glDisableVertexAttribArray(0);
+    }
   }
 
   void Renderer::SetProjectionMatrix(glm::mat4 matProjection)
@@ -152,16 +211,16 @@ namespace he
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
 
-    glUseProgram(m_shader);
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "matPos"), 1, GL_FALSE, &matPosition[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUseProgram(m_shdMesh);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matPos"), 1, GL_FALSE, &matPosition[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
     Texture *pDiffuse = pMat->m_pDiffuse;
     if(pDiffuse)
     {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, pMat->m_pDiffuse->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shader, "sampDiffuse"), 0);
+      glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
     }
 
     Texture *pNormal = pMat->m_pNormal;
@@ -169,12 +228,11 @@ namespace he
     {
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, pMat->m_pNormal->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shader, "sampNormal"), 1);
+      glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
     }
 
     glDrawArrays(GL_TRIANGLES, 0, pMesh->m_iNumTris*3);
     glBindTexture(GL_TEXTURE_2D, 0);
-
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
