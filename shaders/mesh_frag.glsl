@@ -16,6 +16,6 @@ layout (location = 2) out vec3 outWorldPos;
 void main()
 {
   outColor = texture(sampDiffuse, inUV).rgb;
-  outNormal = texture(sampNormal, inUV).rgb;
+  outNormal = inNormal + texture(sampNormal, inUV).rgb;
   outWorldPos = inWorldPos;
 }
