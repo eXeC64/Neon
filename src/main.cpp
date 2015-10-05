@@ -22,8 +22,10 @@ int main(int argc, char **argv)
     std::cerr << "SDL Failed to Init: " << SDL_GetError() << std::endl;
     return 1;
   }
+  const int width = 1920;
+  const int height = 1080;
 
-  SDL_Window *pWindow = SDL_CreateWindow("game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
+  SDL_Window *pWindow = SDL_CreateWindow("game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
 
   if(!pWindow)
   {
@@ -44,7 +46,7 @@ int main(int argc, char **argv)
 
   he::Renderer* pRenderer = new he::Renderer();
 
-  if(!pRenderer->Init(1280,720))
+  if(!pRenderer->Init(width,height))
   {
     std::cerr << "Failed to init renderer." << std::endl;
     return 1;
