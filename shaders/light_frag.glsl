@@ -33,5 +33,5 @@ void main()
   vec3 diffuse = texture(sampDiffuse, screenPos).rgb;
   vec3 normal = texture(sampNormal, screenPos).rgb;
   float depth = texture(sampDepth, screenPos).x;
-  outColor = worldPos();
+  outColor = diffuse;
 }

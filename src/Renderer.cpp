@@ -33,6 +33,7 @@ namespace he
 
   Renderer::Renderer() :
     m_bIsInit(false),
+    m_bIsMidFrame(false),
     m_width(0), m_height(0),
     m_shdMesh(0),
     m_shdLight(0),
@@ -123,94 +124,82 @@ namespace he
 
   void Renderer::BeginFrame()
   {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
-
-    glClearColor(0.0,0.0,0.0,1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    m_bIsMidFrame = true;
+    //Clear out existing lights and geometry
+    m_models.clear();
   }
 
   void Renderer::EndFrame()
   {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    //Prepare for geometry pass
+    SetupGeometryPass();
 
-    if(false /* debug mode 1 */)
-    {
-      glClearColor(0.5,0.5,0.5,1);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //Draw the geometry into the g buffers
+    for (auto model : m_models)
+      DrawModel(model);
 
-      glReadBuffer(GL_COLOR_ATTACHMENT0);
-      glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width/2, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    //Prepare for lighting pass
+    SetupLightPass();
 
-      glReadBuffer(GL_COLOR_ATTACHMENT1);
-      glBlitFramebuffer(0, 0, m_width, m_height, 640, 0, m_width, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-    }
-    else
-    {
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //Apply all our lights
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
+    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    glDisableVertexAttribArray(0);
 
-      glUseProgram(m_shdLight);
+    //TODO in future: final pass for transparent/translucent objects
 
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, m_texNormal);
-      glActiveTexture(GL_TEXTURE2);
-      glBindTexture(GL_TEXTURE_2D, m_texDepth);
-
-      glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
-      glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
-      glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
-      glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
-      glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
-
-      glEnableVertexAttribArray(0);
-      glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
-      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
-      glDisableVertexAttribArray(0);
-    }
+    m_bIsMidFrame = false;
   }
 
   void Renderer::SetProjectionMatrix(glm::mat4 matProjection)
   {
-    m_matProjection = matProjection;
+    //Don't let the matrix change during a frame
+    if(!m_bIsMidFrame)
+      m_matProjection = matProjection;
   }
 
   void Renderer::AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition)
   {
-    if(!pMesh || !pMat)
+    if(!pMesh || !pMat || !m_bIsMidFrame)
       return;
 
+    m_models.push_back(Model(pMesh, pMat, matPosition));
+  }
+
+  void Renderer::DrawModel(const Model &model)
+  {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+    glBindBuffer(GL_ARRAY_BUFFER, model.mesh->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, model.mesh->m_iStride, (void*)model.mesh->m_iOffPos);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, model.mesh->m_iStride, (void*)model.mesh->m_iOffUV);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, model.mesh->m_iStride, (void*)model.mesh->m_iOffNormal);
 
     glUseProgram(m_shdMesh);
-    glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matPos"), 1, GL_FALSE, &matPosition[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matPos"), 1, GL_FALSE, &model.pos[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
-    Texture *pDiffuse = pMat->m_pDiffuse;
+    Texture *pDiffuse = model.mat->m_pDiffuse;
     if(pDiffuse)
     {
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, pMat->m_pDiffuse->m_glTexture);
+      glBindTexture(GL_TEXTURE_2D, model.mat->m_pDiffuse->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
     }
 
-    Texture *pNormal = pMat->m_pNormal;
+    Texture *pNormal = model.mat->m_pNormal;
     if(pNormal)
     {
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, pMat->m_pNormal->m_glTexture);
+      glBindTexture(GL_TEXTURE_2D, model.mat->m_pNormal->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
     }
 
-    glDrawArrays(GL_TRIANGLES, 0, pMesh->m_iNumTris*3);
+    glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glDisableVertexAttribArray(0);
@@ -308,5 +297,32 @@ namespace he
     glDeleteShader(vs);
     glDeleteShader(fs);
     return prog;
+  }
+
+  void Renderer::SetupGeometryPass()
+  {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+    glClearColor(0.0,0.0,0.0,1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
+
+  void Renderer::SetupLightPass()
+  {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(m_shdLight);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texNormal);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
+    glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
   }
 }
