@@ -69,20 +69,14 @@ int main(int argc, char **argv)
     double dt = curTime - lastTime;
     lastTime = curTime;
 
-    glm::mat4 proj = glm::perspective(45.0, 16.0/9.0, 0.1, 100.0);
-    glm::mat4 rot =
+    glm::vec3 cameraNorm = glm::vec3(glm::vec4(0,0,1,0) *
       glm::rotate(glm::mat4(1.0), cameraTilt, glm::vec3(1,0,0)) *
-      glm::rotate(glm::mat4(1.0), cameraYaw, glm::vec3(0,1,0));
-    glm::mat4 tran = glm::translate(glm::mat4(1.0), cameraPos);
+      glm::rotate(glm::mat4(1.0), cameraYaw, glm::vec3(0,1,0)));
 
-    glm::vec3 cameraNorm(glm::vec4(0,0,1,0) * rot);
-
-    pRenderer->SetProjectionMatrix(proj * rot * tran);
-
-    glm::mat4 matMeshPos(1.0);
+    pRenderer->SetViewPosition(cameraPos, cameraYaw, cameraTilt);
 
     pRenderer->BeginFrame();
-    pRenderer->AddMesh(pMesh, &mat, matMeshPos);
+    pRenderer->AddMesh(pMesh, &mat, glm::mat4(1.0));
     pRenderer->EndFrame();
 
     SDL_GL_SwapWindow(pWindow);

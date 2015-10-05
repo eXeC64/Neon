@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include "OpenGL.hpp"
 
 namespace he
@@ -31,7 +32,7 @@ namespace he
     void BeginFrame(); //Begin accepting geometry and lights for new frame
     void EndFrame(); //Draw current frame
 
-    void SetProjectionMatrix(glm::mat4 matProjection);
+    void SetViewPosition(glm::vec3 pos, float yaw, float tilt);
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
@@ -43,12 +44,16 @@ namespace he
     void SetupGeometryPass();
     void SetupLightPass();
     void DrawModel(const Model &model);
+    void UpdateProjectionMatrix();
 
     bool m_bIsInit;
     bool m_bIsMidFrame;
     int m_width;
     int m_height;
-    glm::mat4 m_matProjection; //The camera's projection matrix
+    glm::mat4 m_matProjection;
+    glm::vec3 m_viewPos;
+    float m_viewYaw;
+    float m_viewTilt;
     GLuint m_shdMesh;
     GLuint m_shdLight;
     GLuint m_texDiffuse;

@@ -10,6 +10,8 @@
 #include <vector>
 #include <fstream>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace
 {
   GLuint GenerateBuffer(GLint format, GLint component, GLint attachment, GLsizei width, GLsizei height)
@@ -153,11 +155,26 @@ namespace he
     m_bIsMidFrame = false;
   }
 
-  void Renderer::SetProjectionMatrix(glm::mat4 matProjection)
+  void Renderer::SetViewPosition(glm::vec3 pos, float yaw, float tilt)
   {
-    //Don't let the matrix change during a frame
-    if(!m_bIsMidFrame)
-      m_matProjection = matProjection;
+    if(m_bIsMidFrame)
+      return;
+
+    m_viewPos = pos;
+    m_viewYaw = yaw;
+    m_viewTilt = tilt;
+
+    UpdateProjectionMatrix();
+  }
+
+  void Renderer::UpdateProjectionMatrix()
+  {
+    glm::mat4 proj = glm::perspective(20.0, 16.0/9.0, 0.1, 100.0);
+    glm::mat4 rot =
+      glm::rotate(glm::mat4(1.0), m_viewTilt, glm::vec3(1,0,0)) *
+      glm::rotate(glm::mat4(1.0), m_viewYaw, glm::vec3(0,1,0));
+    glm::mat4 tran = glm::translate(glm::mat4(1.0), m_viewPos);
+    m_matProjection = proj * rot * tran;
   }
 
   void Renderer::AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition)
