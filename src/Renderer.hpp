@@ -36,7 +36,6 @@ namespace he
     GLuint m_shdLight;
     GLuint m_texDiffuse;
     GLuint m_texNormal;
-    GLuint m_texWorldPos;
     GLuint m_texDepth;
     GLuint m_FBO;
     Mesh* m_pPlane;

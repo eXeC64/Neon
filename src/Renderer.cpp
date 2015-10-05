@@ -38,7 +38,6 @@ namespace he
     m_shdLight(0),
     m_texDiffuse(0),
     m_texNormal(0),
-    m_texWorldPos(0),
     m_texDepth(0),
     m_FBO(0),
     m_pPlane(nullptr)
@@ -54,8 +53,6 @@ namespace he
       glDeleteTextures(1, &m_texDiffuse);
     if(m_texNormal)
       glDeleteTextures(1, &m_texNormal);
-    if(m_texWorldPos)
-      glDeleteTextures(1, &m_texWorldPos);
     if(m_texDepth)
       glDeleteTextures(1, &m_texDepth);
     if(m_FBO)
@@ -75,26 +72,22 @@ namespace he
 
     m_texDiffuse = GenerateBuffer(GL_RGB8, GL_RGB, GL_COLOR_ATTACHMENT0, m_width, m_height);
     m_texNormal = GenerateBuffer(GL_RGB16F, GL_RGB, GL_COLOR_ATTACHMENT1, m_width, m_height);
-    m_texWorldPos = GenerateBuffer(GL_RGB16F, GL_RGB, GL_COLOR_ATTACHMENT2, m_width, m_height);
     m_texDepth = GenerateBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT, m_width, m_height);
 
     GLenum drawBuffers[] = {
       GL_COLOR_ATTACHMENT0,
-      GL_COLOR_ATTACHMENT1,
-      GL_COLOR_ATTACHMENT2
+      GL_COLOR_ATTACHMENT1
     };
-    glDrawBuffers(3, drawBuffers);
+    glDrawBuffers(2, drawBuffers);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
       glDeleteTextures(1, &m_texDiffuse);
       glDeleteTextures(1, &m_texNormal);
-      glDeleteTextures(1, &m_texWorldPos);
       glDeleteTextures(1, &m_texDepth);
       glDeleteFramebuffers(1, &m_FBO);
       m_texDiffuse = 0;
       m_texNormal = 0;
-      m_texWorldPos = 0;
       m_texDepth = 0;
       m_FBO = 0;
       return false;
@@ -150,9 +143,6 @@ namespace he
 
       glReadBuffer(GL_COLOR_ATTACHMENT1);
       glBlitFramebuffer(0, 0, m_width, m_height, 640, 0, m_width, m_height/2, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-      glReadBuffer(GL_COLOR_ATTACHMENT2);
-      glBlitFramebuffer(0, 0, m_width, m_height, 0, m_height/2, m_width/2, m_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
     else
     {
@@ -165,12 +155,13 @@ namespace he
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, m_texNormal);
       glActiveTexture(GL_TEXTURE2);
-      glBindTexture(GL_TEXTURE_2D, m_texWorldPos);
+      glBindTexture(GL_TEXTURE_2D, m_texDepth);
 
       glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
       glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
       glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
-      glUniform1i(glGetUniformLocation(m_shdLight, "sampPosition"), 2);
+      glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
+      glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
       glEnableVertexAttribArray(0);
       glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
