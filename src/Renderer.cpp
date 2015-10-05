@@ -37,6 +37,9 @@ namespace he
     m_bIsInit(false),
     m_bIsMidFrame(false),
     m_width(0), m_height(0),
+    m_curTime(0),
+    m_viewYaw(0),
+    m_viewTilt(0),
     m_shdMesh(0),
     m_shdLight(0),
     m_texDiffuse(0),
@@ -232,6 +235,11 @@ namespace he
     (void)radius;
   }
 
+  void Renderer::AddTime(double dt)
+  {
+    m_curTime += dt;
+  }
+
   GLuint Renderer::LoadShader(const std::string &vsPath, const std::string &fsPath)
   {
     //Read the sources
@@ -336,6 +344,8 @@ namespace he
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, m_texDepth);
 
+    glUniform1f(glGetUniformLocation(m_shdLight, "time"), (float)m_curTime);
+    glUniform3f(glGetUniformLocation(m_shdLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
     glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
     glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
     glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);

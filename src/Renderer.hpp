@@ -38,6 +38,9 @@ namespace he
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
     void AddLight(glm::vec3 pos, glm::vec3 rgb, double radius);
 
+    //Add to current time value
+    void AddTime(double dt);
+
   private:
     GLuint LoadShader(const std::string &vsPath, const std::string &fsPath);
 
@@ -50,6 +53,7 @@ namespace he
     bool m_bIsMidFrame;
     int m_width;
     int m_height;
+    double m_curTime;
     glm::mat4 m_matProjection;
     glm::vec3 m_viewPos;
     float m_viewYaw;

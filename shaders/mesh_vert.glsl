@@ -14,7 +14,6 @@ uniform mat4 matView;
 void main()
 {
   inUV = vertexUV;
-  inNormal = (matView * matPos * vec4(vertexNorm, 1)).xyz;
-  inWorldPos = (matPos * vec4(vertexPos, 1)).xyz;
+  inNormal = vertexNorm;
   gl_Position = matView * matPos * vec4(vertexPos, 1);
 }

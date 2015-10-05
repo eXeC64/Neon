@@ -75,12 +75,13 @@ int main(int argc, char **argv)
 
     pRenderer->SetViewPosition(cameraPos, cameraYaw, cameraTilt);
 
+    pRenderer->AddTime(dt);
     pRenderer->BeginFrame();
     pRenderer->AddMesh(pMesh, &mat, glm::mat4(1.0));
     pRenderer->EndFrame();
 
     SDL_GL_SwapWindow(pWindow);
-    SDL_Delay(1);
+    SDL_Delay(10);
 
     //Handle events
     SDL_Event e;

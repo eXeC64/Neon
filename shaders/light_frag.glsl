@@ -8,6 +8,7 @@ uniform sampler2D sampDiffuse;
 uniform sampler2D sampNormal;
 uniform sampler2D sampDepth;
 
+uniform float time;
 uniform vec2 screenSize;
 uniform mat4 matView;
 
