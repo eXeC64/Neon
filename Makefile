@@ -6,13 +6,13 @@ LDFLAGS = -lGL -lpng `sdl2-config --libs`
 SRCS = main.cpp Renderer.cpp Mesh.cpp Loader.cpp Texture.cpp
 OBJS = $(addprefix build/, $(SRCS:.cpp=.o))
 
-PROG = helium
+TARGET = helium
 
-$(PROG): $(OBJS)
-	g++ -o $(PROG) $(LDFLAGS) $(OBJS)
+$(TARGET): $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 build/%.o: src/%.cpp
-	g++ $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 clean:
-	rm -f $(PROG) $(OBJS)
+	$(RM) $(TARGET) $(OBJS)
