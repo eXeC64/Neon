@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   he::Texture *pDiffuse = he::Loader::LoadPNG("diffuse.png");
   he::Texture *pNormal = he::Loader::LoadPNG("normal.png");
   he::Material mat(pDiffuse, pNormal);
-  he::Mesh *pMesh = he::Loader::LoadOBJ("monkey.obj");
+  he::Mesh *pMesh = he::Loader::LoadOBJ("sponza.obj");
 
   glm::vec3 cameraPos(0,0,-10);
   float cameraYaw = 0;
