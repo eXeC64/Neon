@@ -12,9 +12,20 @@
 #include <png.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdexcept>
+#include <iterator>
 
 namespace
 {
+  std::vector<std::string> splitStr(const std::string &str)
+  {
+    std::stringstream ss(str);
+    std::istream_iterator<std::string> begin(ss);
+    std::istream_iterator<std::string> end;
+    std::vector<std::string> vstrings(begin, end);
+    return vstrings;
+  }
+
   glm::ivec3 parseTrip(const std::string &str)
   {
     //These indices are 0 = invalid, 1 = first
@@ -90,18 +101,41 @@ namespace he
       }
       else if(cmd == "f")
       {
-        std::string faceVertex[3];
-        std::getline(ls, faceVertex[0], ' ');
-        std::getline(ls, faceVertex[1], ' ');
-        std::getline(ls, faceVertex[2], '\n');
+        std::vector<std::string> vertices = splitStr(line);
+        vertices.erase(vertices.begin()); //erase the "f" part
 
-        for(int i = 0; i < 3; ++i)
+        glm::ivec3 base, prev;
+        for(size_t i = 0; i < vertices.size(); ++i)
         {
-          glm::ivec3 idx = parseTrip(faceVertex[i]);
-          //Subtract 1 from each index so it's 0-based and -1 = invalid
-          idx -= glm::ivec3(1,1,1);
-          indices.push_back(idx);
+          glm::ivec3 idx = parseTrip(vertices[i]);
+
+          if(i == 0)
+          {
+            base = idx;
+          }
+          else if(i == 1)
+          {
+            prev = idx;
+          }
+          else
+          {
+            indices.push_back(base);
+            indices.push_back(prev);
+            indices.push_back(idx);
+            prev = idx;
+          }
         }
+      }
+      else if(cmd == "o")
+      {
+        //do nothing
+      }
+      else if(cmd == "usemtl")
+      {
+        //do nothing
+      }
+      else
+      {
       }
     }
 
@@ -110,24 +144,35 @@ namespace he
     for(auto idx : indices)
     {
       //Face indices must always be valid
+      const int pos_idx = idx[0] > 0 ? idx[0] - 1 : vertices.size() - 1 - idx[0];
       for(int i = 0; i < 3; ++i)
-        data.push_back(vertices[idx[0]][i]);
+        data.push_back(vertices[pos_idx][i]);
 
       //Do we have a valid uv index?
-      if(idx[1] >= 0)
+      if(idx[1] != 0)
+      {
+        const int uv_idx = idx[1] > 0 ? idx[1] - 1 : vertices.size() - 1 - idx[1];
         for(int i = 0; i < 2; ++i)
-          data.push_back(uvs[idx[1]][i]);
+          data.push_back(uvs[uv_idx][i]);
+      }
       else
+      {
         for(int i = 0; i < 2; ++i)
           data.push_back(0); //Just set tex coords to 0
+      }
 
       //Do we have valid normal index?
-      if(idx[2] >= 0)
+      if(idx[2] != 0)
+      {
+        const int nor_idx = idx[2] > 0 ? idx[2] - 1 : vertices.size() - 1 - idx[2];
         for(int i = 0; i < 3; ++i)
-          data.push_back(normals[idx[2]][i]);
+          data.push_back(normals[nor_idx][i]);
+      }
       else
+      {
         for(int i = 0; i < 3; ++i)
           data.push_back(i == 0 ? 1 : 0); //Just point towards +x instead
+      }
     }
 
     Mesh *pMesh = new Mesh();
