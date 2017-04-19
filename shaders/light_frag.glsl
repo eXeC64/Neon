@@ -1,6 +1,6 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
 
 layout (location = 0) out vec3 outColor;
 
@@ -13,9 +13,9 @@ uniform vec3 viewPos;
 uniform vec2 screenSize;
 uniform mat4 matView;
 
-mat4 invMatView = inverse(matView);
+mat4 invMatView;
 
-vec2 screenPos = gl_FragCoord.xy / screenSize;
+vec2 screenPos;
 
 float normalizeDepth(float value, float min, float max)
 {
@@ -34,6 +34,8 @@ vec3 calcWorldPos()
 
 void main()
 {
+  screenPos = gl_FragCoord.xy / screenSize;
+  invMatView = inverse(matView);
   vec3 diffuse = texture(sampDiffuse, screenPos).rgb;
   vec3 worldNormal = normalize(texture(sampNormal, screenPos).xyz);
   vec3 worldPos = calcWorldPos();

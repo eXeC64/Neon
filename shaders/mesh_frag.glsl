@@ -1,6 +1,6 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
 
 uniform sampler2D sampDiffuse;
 uniform sampler2D sampNormal;
@@ -8,8 +8,8 @@ uniform sampler2D sampNormal;
 uniform mat4 matPos;
 uniform mat4 matView;
 
-mat4 invMatView = inverse(matView);
-mat4 invMatPos = inverse(matPos);
+mat4 invMatPos;
+mat4 invMatView;
 
 in vec2 inUV;
 in vec3 inNormal;
@@ -33,6 +33,8 @@ mat4 rotationMatrix(vec3 axis, float angle)
 
 void main()
 {
+  invMatPos = inverse(matPos);
+  invMatView = inverse(matView);
   outColor = texture(sampDiffuse, inUV).rgb;
   vec3 normMap = texture(sampNormal, inUV).xyz;
   float rotX = dot(vec3(1,0,0), inNormal);
