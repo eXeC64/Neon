@@ -97,8 +97,13 @@ int main(int argc, char **argv)
           quit = true;
           break;
         case SDL_MOUSEMOTION:
-          cameraYaw += 0.05 * dt * e.motion.xrel;
-          cameraTilt += 0.05 * dt * e.motion.yrel;
+          cameraYaw += 0.15 * dt * e.motion.xrel;
+          cameraTilt += 0.15 * dt * e.motion.yrel;
+          break;
+        case SDL_KEYDOWN:
+          if(e.key.keysym.sym == SDLK_p) {
+            std::cout << "cameraPos: " << cameraPos.x << "," << cameraPos.y << "," << cameraPos.z << std::endl;
+          }
           break;
       }
     }
