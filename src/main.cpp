@@ -58,7 +58,7 @@ int main(int argc, char **argv)
   he::Material mat(pDiffuse, pNormal);
   he::Mesh *pMesh = he::Loader::LoadOBJ("sponza.obj");
 
-  glm::vec3 cameraPos(0,0,-10);
+  glm::vec3 cameraPos(0,-2,0);
   float cameraYaw = 0;
   float cameraTilt = 0;
 
