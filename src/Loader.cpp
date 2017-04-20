@@ -1,193 +1,103 @@
 #include "Loader.hpp"
 
 #include "Mesh.hpp"
+#include "Model.hpp"
 #include "Texture.hpp"
 
-#include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #include <glm/vec2.hpp>
 #include <png.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdexcept>
-#include <iterator>
-
-namespace
-{
-  std::vector<std::string> splitStr(const std::string &str)
-  {
-    std::stringstream ss(str);
-    std::istream_iterator<std::string> begin(ss);
-    std::istream_iterator<std::string> end;
-    std::vector<std::string> vstrings(begin, end);
-    return vstrings;
-  }
-
-  glm::ivec3 parseTrip(const std::string &str)
-  {
-    //These indices are 0 = invalid, 1 = first
-    glm::ivec3 ret(0,0,0);
-
-    size_t seps = std::count(str.begin(), str.end(), '/');
-    std::istringstream ss(str);
-    char junk;
-
-    if(seps == 0)
-    {
-      ss >> ret[0];
-    }
-    else if(seps == 1)
-    {
-      ss >> ret[0] >> junk >> ret[1];
-    }
-    else if(seps == 2)
-    {
-      ss >> ret[0] >> junk;
-      if(ss.peek() != '/')
-        ss >> ret[1];
-      ss >> junk >> ret[2];
-    }
-    return ret;
-  }
-}
+#include <vector>
 
 namespace he
 {
-  Mesh* Loader::LoadOBJ(const std::string &path)
+  Mesh* Loader::LoadMesh(const aiMesh* mesh)
   {
-    std::ifstream fin;
-    fin.open(path);
-
-    if(!fin.good())
-      return nullptr;
-
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec2> uvs;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::ivec3> indices;
-
-    while(!fin.eof())
-    {
-      std::string line;
-      std::getline(fin, line, '\n');
-
-      if(line.empty() || line[0] == '#')
-        continue;
-
-      std::string cmd;
-      std::istringstream ls(line);
-      std::getline(ls, cmd, ' ');
-
-      if(cmd == "v")
-      {
-        double x,y,z;
-        ls >> x >> y >> z;
-        vertices.push_back(glm::vec3(x,y,z));
-      }
-      else if(cmd == "vt")
-      {
-        double u,v;
-        ls >> u >> v;
-        uvs.push_back(glm::vec2(u,v));
-      }
-      else if(cmd == "vn")
-      {
-        double x,y,z;
-        ls >> x >> y >> z;
-        normals.push_back(glm::vec3(x,y,z));
-      }
-      else if(cmd == "f")
-      {
-        std::vector<std::string> vertices = splitStr(line);
-        vertices.erase(vertices.begin()); //erase the "f" part
-
-        glm::ivec3 base, prev;
-        for(size_t i = 0; i < vertices.size(); ++i)
-        {
-          glm::ivec3 idx = parseTrip(vertices[i]);
-
-          if(i == 0)
-          {
-            base = idx;
-          }
-          else if(i == 1)
-          {
-            prev = idx;
-          }
-          else
-          {
-            indices.push_back(base);
-            indices.push_back(prev);
-            indices.push_back(idx);
-            prev = idx;
-          }
-        }
-      }
-      else if(cmd == "o")
-      {
-        //do nothing
-      }
-      else if(cmd == "usemtl")
-      {
-        //do nothing
-      }
-      else
-      {
-      }
-    }
-
-    //For now just construct an un-indexed mesh: x,y,z,u,v,nx,ny,nz
     std::vector<GLfloat> data;
-    for(auto idx : indices)
+    for(GLuint i = 0; i < mesh->mNumVertices; ++i)
     {
-      //Face indices must always be valid
-      const int pos_idx = idx[0] > 0 ? idx[0] - 1 : vertices.size() - 1 - idx[0];
-      for(int i = 0; i < 3; ++i)
-        data.push_back(vertices[pos_idx][i]);
-
-      //Do we have a valid uv index?
-      if(idx[1] != 0)
+      data.push_back(mesh->mVertices[i].x);
+      data.push_back(mesh->mVertices[i].y);
+      data.push_back(mesh->mVertices[i].z);
+      if(mesh->mTextureCoords[0])
       {
-        const int uv_idx = idx[1] > 0 ? idx[1] - 1 : vertices.size() - 1 - idx[1];
-        for(int i = 0; i < 2; ++i)
-          data.push_back(uvs[uv_idx][i]);
+        data.push_back(mesh->mTextureCoords[0][i].x);
+        data.push_back(mesh->mTextureCoords[0][i].y);
       }
       else
       {
-        for(int i = 0; i < 2; ++i)
-          data.push_back(0); //Just set tex coords to 0
+        data.push_back(0.0f);
+        data.push_back(0.0f);
       }
+      data.push_back(mesh->mNormals[i].x);
+      data.push_back(mesh->mNormals[i].y);
+      data.push_back(mesh->mNormals[i].z);
+    }
 
-      //Do we have valid normal index?
-      if(idx[2] != 0)
+    std::vector<GLuint> indices;
+    for(GLuint i = 0; i < mesh->mNumFaces; ++i)
+    {
+      for(GLuint j = 0; j < mesh->mFaces[i].mNumIndices; ++j)
       {
-        const int nor_idx = idx[2] > 0 ? idx[2] - 1 : vertices.size() - 1 - idx[2];
-        for(int i = 0; i < 3; ++i)
-          data.push_back(normals[nor_idx][i]);
-      }
-      else
-      {
-        for(int i = 0; i < 3; ++i)
-          data.push_back(i == 0 ? 1 : 0); //Just point towards +x instead
+        indices.push_back(mesh->mFaces[i].mIndices[j]);
       }
     }
 
-    Mesh *pMesh = new Mesh();
+    Mesh* pMesh = new Mesh();
     pMesh->m_iNumTris = data.size() / 24; //(8 floats per vertex, 3 vertices per tri)
+    pMesh->m_iNumIndices = indices.size();
     pMesh->m_iStride = 8 * sizeof(GLfloat);
     pMesh->m_iOffPos = 0 * sizeof(GLfloat);
     pMesh->m_iOffUV = 3 * sizeof(GLfloat);
     pMesh->m_iOffNormal = 5 * sizeof(GLfloat);
 
+    glGenVertexArrays(1, &pMesh->m_vaoConfig);
     glGenBuffers(1, &pMesh->m_vboVertices);
+    glGenBuffers(1, &pMesh->m_vboIndices);
+
+    glBindVertexArray(pMesh->m_vaoConfig);
+
     glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->m_vboIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+
+    glBindVertexArray(0);
 
     return pMesh;
+  }
+
+  Model* Loader::LoadModel(const std::string &path)
+  {
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(path,
+        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals |
+        aiProcess_PreTransformVertices | aiProcess_SplitLargeMeshes |
+        aiProcess_RemoveRedundantMaterials | aiProcess_GenUVCoords);
+
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+      return nullptr;
+
+    Model* model = new Model();
+
+    for(GLuint i = 0; i < scene->mRootNode->mNumMeshes; ++i)
+    {
+      const aiMesh* mesh = scene->mMeshes[scene->mRootNode->mMeshes[i]];
+      Mesh* heMesh = Loader::LoadMesh(mesh);
+      model->m_meshes.push_back(heMesh);
+    }
+
+    return model;
   }
 
   Texture* Loader::LoadPNG(const std::string &path)

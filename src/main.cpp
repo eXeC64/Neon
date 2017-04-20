@@ -53,13 +53,12 @@ int main(int argc, char **argv)
   }
 
 
-  he::Texture *pDiffuse = he::Loader::LoadPNG("diffuse.png");
-  he::Texture *pNormal = he::Loader::LoadPNG("normal.png");
-  he::Material mat(pDiffuse, pNormal);
-  he::Mesh *pMesh = he::Loader::LoadOBJ("sponza.obj");
+  he::Texture *pDiffuse = he::Loader::LoadPNG("images/stone.png");
+  he::Material mat(pDiffuse);
+  he::Model *pModel = he::Loader::LoadModel("meshes/sponza.obj");
 
-  glm::vec3 cameraPos(0,-2,0);
-  float cameraYaw = 0;
+  glm::vec3 cameraPos(-10,-7,0);
+  float cameraYaw = -1.5;
   float cameraTilt = 0;
 
   double lastTime = SDL_GetTicks() / 1000.0;
@@ -79,7 +78,10 @@ int main(int argc, char **argv)
 
     pRenderer->AddTime(dt);
     pRenderer->BeginFrame();
-    pRenderer->AddMesh(pMesh, &mat, glm::mat4(1.0));
+    for(he::Mesh* mesh : pModel->m_meshes)
+    {
+      pRenderer->AddMesh(mesh, &mat, glm::mat4(1.0));
+    }
     pRenderer->EndFrame();
 
     SDL_GL_SwapWindow(pWindow);
@@ -120,8 +122,7 @@ int main(int argc, char **argv)
   }
 
   delete pDiffuse;
-  delete pNormal;
-  delete pMesh;
+  delete pModel;
   delete pRenderer;
 
   SDL_GL_DeleteContext(GLcontext);

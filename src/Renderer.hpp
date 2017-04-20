@@ -11,10 +11,9 @@ namespace he
   class Mesh;
   class Material;
 
-  class Model
+  struct MeshInstance
   {
-  public:
-    Model(Mesh* pMesh, Material* pMat, glm::mat4 position)
+    MeshInstance(Mesh* pMesh, Material* pMat, glm::mat4 position)
       : mesh(pMesh), mat(pMat), pos(position) {};
     Mesh* mesh;
     Material* mat;
@@ -46,7 +45,7 @@ namespace he
 
     void SetupGeometryPass();
     void SetupLightPass();
-    void DrawModel(const Model &model);
+    void DrawMeshInstance(const MeshInstance &model);
     void UpdateProjectionMatrix();
 
     bool m_bIsInit;
@@ -65,6 +64,6 @@ namespace he
     GLuint m_texDepth;
     GLuint m_FBO;
     Mesh* m_pPlane;
-    std::vector<Model> m_models;
+    std::vector<MeshInstance> m_models;
   };
 }

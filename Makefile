@@ -1,9 +1,9 @@
 .PHONY: clean
 
 CXXFLAGS = -g -W -Wall -std=c++14 `sdl2-config --cflags`
-LDFLAGS = -lGL -lpng `sdl2-config --libs`
+LDFLAGS = -lGL -lpng `sdl2-config --libs` -lassimp
 
-SRCS = main.cpp Renderer.cpp Mesh.cpp Loader.cpp Texture.cpp
+SRCS = main.cpp Renderer.cpp Model.cpp Mesh.cpp Loader.cpp Texture.cpp
 OBJS = $(addprefix build/, $(SRCS:.cpp=.o))
 
 TARGET = helium

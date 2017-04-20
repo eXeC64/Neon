@@ -141,7 +141,7 @@ namespace he
 
     //Draw the geometry into the g buffers
     for (auto model : m_models)
-      DrawModel(model);
+      DrawMeshInstance(model);
 
     //Prepare for lighting pass
     SetupLightPass();
@@ -185,20 +185,11 @@ namespace he
     if(!pMesh || !pMat || !m_bIsMidFrame)
       return;
 
-    m_models.push_back(Model(pMesh, pMat, matPosition));
+    m_models.push_back(MeshInstance(pMesh, pMat, matPosition));
   }
 
-  void Renderer::DrawModel(const Model &model)
+  void Renderer::DrawMeshInstance(const MeshInstance &model)
   {
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, model.mesh->m_vboVertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, model.mesh->m_iStride, (void*)model.mesh->m_iOffPos);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, model.mesh->m_iStride, (void*)model.mesh->m_iOffUV);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, model.mesh->m_iStride, (void*)model.mesh->m_iOffNormal);
-
     glUseProgram(m_shdMesh);
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matPos"), 1, GL_FALSE, &model.pos[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
@@ -207,7 +198,7 @@ namespace he
     if(pDiffuse)
     {
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, model.mat->m_pDiffuse->m_glTexture);
+      glBindTexture(GL_TEXTURE_2D, pDiffuse->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
     }
 
@@ -215,16 +206,30 @@ namespace he
     if(pNormal)
     {
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, model.mat->m_pNormal->m_glTexture);
+      glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
     }
 
-    glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(model.mesh->m_vaoConfig);
+    if(glGetError()) {
+      std::cout << "err: " << glGetError() << std::endl;
+    }
 
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
+    if(model.mesh->m_iNumIndices > 0)
+    {
+      glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+      if(glGetError()) {
+        std::cout << "err: " << glGetError() << std::endl;
+      }
+    }
+    else
+    {
+      glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+    }
+
+    glBindVertexArray(0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
   }
 
   void Renderer::AddLight(glm::vec3 pos, glm::vec3 rgb, double radius)
