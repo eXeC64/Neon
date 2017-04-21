@@ -8,7 +8,7 @@
 namespace he
 {
   class Mesh;
-  /* class Material; */
+  class Material;
 
   class Model
   {
@@ -22,6 +22,6 @@ namespace he
     Model();
   public:
     std::vector<Mesh*> m_meshes;
-    /* std::vector<Texture*> m_textures; */
+    std::vector<Material*> m_materials;
   };
 }

@@ -104,9 +104,9 @@ int main(int argc, char **argv)
 
   he::Loader loader;
 
-  he::Texture *pDiffuse = loader.LoadPNG("images/stone.png");
+  he::Texture *pDiffuse = loader.LoadPNG("kamen.png");
   he::Material mat(pDiffuse);
-  he::Model *pModel = loader.LoadModel("meshes/sponza.obj");
+  he::Model *pModel = loader.LoadModel("sponza.obj");
 
   glm::vec3 cameraPos(-10,-7,0);
   float cameraYaw = -1.5;
@@ -130,9 +130,9 @@ int main(int argc, char **argv)
     pRenderer->AddTime(dt);
 
     pRenderer->BeginFrame();
-    for(he::Mesh* mesh : pModel->m_meshes)
+    for(size_t i = 0; i < pModel->m_meshes.size(); ++i)
     {
-      pRenderer->AddMesh(mesh, &mat, glm::mat4(1.0));
+      pRenderer->AddMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
     }
 
     pRenderer->AddLight(

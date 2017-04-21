@@ -1,5 +1,6 @@
 #include "Loader.hpp"
 
+#include "Material.hpp"
 #include "Mesh.hpp"
 #include "Model.hpp"
 #include "Texture.hpp"
@@ -95,8 +96,27 @@ namespace he
     for(GLuint i = 0; i < node->mNumMeshes; ++i)
     {
       const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-      Mesh* heMesh = Loader::LoadMesh(mesh);
+      Mesh* heMesh = LoadMesh(mesh);
       model->m_meshes.push_back(heMesh);
+
+      const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+      Texture *diffuse = nullptr;
+      Texture *normal = nullptr;
+      if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+      {
+        aiString str;
+        material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+        std::string path(str.C_Str());
+        diffuse = LoadPNG(path);
+      }
+      if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
+      {
+        aiString str;
+        material->GetTexture(aiTextureType_NORMALS, 0, &str);
+        std::string path(str.C_Str());
+        normal = LoadPNG(path);
+      }
+      model->m_materials.push_back(new Material(diffuse, normal));
     }
     for(GLuint i = 0; i < node->mNumChildren; ++i)
     {
