@@ -198,12 +198,15 @@ namespace he
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matPos"), 1, GL_FALSE, &model.pos[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
+
     Texture *pDiffuse = model.mat->m_pDiffuse;
     if(pDiffuse)
     {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, pDiffuse->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
     Texture *pNormal = model.mat->m_pNormal;
@@ -212,19 +215,15 @@ namespace he
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
       glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
     glBindVertexArray(model.mesh->m_vaoConfig);
-    if(glGetError()) {
-      std::cout << "err: " << glGetError() << std::endl;
-    }
 
     if(model.mesh->m_iNumIndices > 0)
     {
       glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
-      if(glGetError()) {
-        std::cout << "err: " << glGetError() << std::endl;
-      }
     }
     else
     {
