@@ -102,7 +102,6 @@ namespace he
     //Return to default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glClearColor(0.5,0.5,0.5,1);
     glClearDepth(1.0);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
@@ -348,6 +347,7 @@ namespace he
   void Renderer::SetupLightPass()
   {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
