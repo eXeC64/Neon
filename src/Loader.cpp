@@ -136,7 +136,7 @@ namespace he
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
-        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals |
+        aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenSmoothNormals |
         aiProcess_PreTransformVertices | aiProcess_SplitLargeMeshes |
         aiProcess_RemoveRedundantMaterials | aiProcess_GenUVCoords);
 
