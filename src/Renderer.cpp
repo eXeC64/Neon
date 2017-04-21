@@ -132,6 +132,7 @@ namespace he
     m_bIsMidFrame = true;
     //Clear out existing lights and geometry
     m_models.clear();
+    m_lights.clear();
   }
 
   void Renderer::EndFrame()
@@ -151,14 +152,8 @@ namespace he
     glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
 
-    for(int i = 1; i < 3; ++i)
-    {
-      glm::vec3 lightPos(9 * glm::sin(2*m_curTime * i), 1 + 2 * i, 5.5 * glm::cos(2*m_curTime * i));
-      glm::vec3 lightColor(i == 1 ? 1.0 : 0.0, 0.0, i == 1 ? 0.0 : 1.0);
-      glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-      glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), lightColor.x, lightColor.y, lightColor.z);
-      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
-    }
+    for (auto light : m_lights)
+      DrawLightInstance(light);
 
     glDisableVertexAttribArray(0);
 
@@ -241,12 +236,16 @@ namespace he
     glBindTexture(GL_TEXTURE_2D, 0);
   }
 
-  void Renderer::AddLight(glm::vec3 pos, glm::vec3 rgb, double radius)
+  void Renderer::DrawLightInstance(const LightInstance &light)
   {
-    //add this light to the list to be rendered this frame
-    (void)pos;
-    (void)rgb;
-    (void)radius;
+    glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
+    glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+  }
+
+  void Renderer::AddLight(glm::vec3 pos, glm::vec3 color)
+  {
+    m_lights.push_back(LightInstance(pos, color));
   }
 
   void Renderer::AddTime(double dt)

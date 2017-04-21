@@ -20,6 +20,14 @@ namespace he
     glm::mat4 pos;
   };
 
+  struct LightInstance
+  {
+    LightInstance(glm::vec3 pos, glm::vec3 color)
+      : pos(pos), color(color) {};
+    glm::vec3 pos;
+    glm::vec3 color;
+  };
+
   class Renderer
   {
   public:
@@ -35,7 +43,7 @@ namespace he
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
-    void AddLight(glm::vec3 pos, glm::vec3 rgb, double radius);
+    void AddLight(glm::vec3 pos, glm::vec3 color);
 
     //Add to current time value
     void AddTime(double dt);
@@ -46,6 +54,7 @@ namespace he
     void SetupGeometryPass();
     void SetupLightPass();
     void DrawMeshInstance(const MeshInstance &model);
+    void DrawLightInstance(const LightInstance &light);
     void UpdateProjectionMatrix();
 
     bool m_bIsInit;
@@ -65,5 +74,6 @@ namespace he
     GLuint m_FBO;
     Mesh* m_pPlane;
     std::vector<MeshInstance> m_models;
+    std::vector<LightInstance> m_lights;
   };
 }
