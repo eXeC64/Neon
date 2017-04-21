@@ -13,6 +13,19 @@
 
 namespace he
 {
+
+  Loader::Loader()
+  {
+  }
+
+  Loader::~Loader()
+  {
+    for(auto it : m_textures)
+      delete it.second;
+    for(auto it : m_models)
+      delete it.second;
+  }
+
   Mesh* Loader::LoadMesh(const aiMesh* mesh)
   {
     std::vector<GLfloat> data;
@@ -79,6 +92,14 @@ namespace he
 
   Model* Loader::LoadModel(const std::string &path)
   {
+    //Check cache
+    {
+      auto it = m_models.find(path);
+      if(it != m_models.end()) {
+        return it->second;
+      }
+    }
+
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals |
@@ -97,11 +118,19 @@ namespace he
       model->m_meshes.push_back(heMesh);
     }
 
+    m_models[path] = model;
     return model;
   }
 
   Texture* Loader::LoadPNG(const std::string &path)
   {
+    {
+      auto it = m_textures.find(path);
+      if(it != m_textures.end()) {
+        return it->second;
+      }
+    }
+
     FILE *fp = fopen(path.c_str(), "rb");
 
     if(!fp)
@@ -149,10 +178,11 @@ namespace he
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    m_textures[path] = pTex;
     return pTex;
   }
 
-  Mesh* Loader::Plane()
+  Mesh* Loader::GeneratePlane()
   {
     Mesh *pMesh = new Mesh();
     pMesh->m_iNumTris = 2;
@@ -174,6 +204,7 @@ namespace he
     glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     return pMesh;
   }
 

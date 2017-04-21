@@ -102,10 +102,11 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  he::Loader loader;
 
-  he::Texture *pDiffuse = he::Loader::LoadPNG("images/stone.png");
+  he::Texture *pDiffuse = loader.LoadPNG("images/stone.png");
   he::Material mat(pDiffuse);
-  he::Model *pModel = he::Loader::LoadModel("meshes/sponza.obj");
+  he::Model *pModel = loader.LoadModel("meshes/sponza.obj");
 
   glm::vec3 cameraPos(-10,-7,0);
   float cameraYaw = -1.5;
@@ -183,8 +184,6 @@ int main(int argc, char **argv)
 
   }
 
-  delete pDiffuse;
-  delete pModel;
   delete pRenderer;
 
   SDL_GL_DeleteContext(GLcontext);

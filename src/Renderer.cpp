@@ -119,7 +119,7 @@ namespace he
     if(!m_shdLight)
       return false;
 
-    m_pPlane = Loader::Plane();
+    m_pPlane = Loader::GeneratePlane();
     if(!m_pPlane)
       return false;
 
