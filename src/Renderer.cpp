@@ -150,7 +150,16 @@ namespace he
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
-    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+
+    for(int i = 1; i < 3; ++i)
+    {
+      glm::vec3 lightPos(9 * glm::sin(2*m_curTime * i), 1 + 2 * i, 5.5 * glm::cos(2*m_curTime * i));
+      glm::vec3 lightColor(i == 1 ? 1.0 : 0.0, 0.0, i == 1 ? 0.0 : 1.0);
+      glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+      glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), lightColor.x, lightColor.y, lightColor.z);
+      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    }
+
     glDisableVertexAttribArray(0);
 
     //TODO in future: final pass for transparent/translucent objects
@@ -332,6 +341,8 @@ namespace he
   void Renderer::SetupGeometryPass()
   {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
     glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
@@ -340,6 +351,10 @@ namespace he
   {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_ONE, GL_ONE);
+
     glUseProgram(m_shdLight);
 
     glActiveTexture(GL_TEXTURE0);

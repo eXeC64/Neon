@@ -10,6 +10,8 @@ uniform sampler2D sampDepth;
 
 uniform float time;
 uniform vec3 viewPos;
+uniform vec3 lightPos;
+uniform vec3 lightColor;
 uniform vec2 screenSize;
 uniform mat4 matView;
 
@@ -41,13 +43,12 @@ void main()
   vec3 worldPos = calcWorldPos();
   float depth = texture(sampDepth, screenPos).x;
 
-  vec3 lightPos = 9.0 * vec3(sin(2.0*time), 0.75, 0.60 * cos(2.0 * time));
   vec3 lightDir = normalize(lightPos - worldPos);
   float light = clamp(dot(lightDir,worldNormal), 0.15, 1.0);
 
   outColor = vec3(0.5);
   if(depth < 1.0)
   {
-    outColor = light * diffuse;
+    outColor = lightColor * light * diffuse;
   }
 }
