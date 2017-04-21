@@ -90,6 +90,20 @@ namespace he
     return pMesh;
   }
 
+  void Loader::ProcessModelNode(Model* model, const aiScene* scene, const aiNode* node)
+  {
+    for(GLuint i = 0; i < node->mNumMeshes; ++i)
+    {
+      const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+      Mesh* heMesh = Loader::LoadMesh(mesh);
+      model->m_meshes.push_back(heMesh);
+    }
+    for(GLuint i = 0; i < node->mNumChildren; ++i)
+    {
+      ProcessModelNode(model, scene, node->mChildren[i]);
+    }
+  }
+
   Model* Loader::LoadModel(const std::string &path)
   {
     //Check cache
@@ -110,13 +124,7 @@ namespace he
       return nullptr;
 
     Model* model = new Model();
-
-    for(GLuint i = 0; i < scene->mRootNode->mNumMeshes; ++i)
-    {
-      const aiMesh* mesh = scene->mMeshes[scene->mRootNode->mMeshes[i]];
-      Mesh* heMesh = Loader::LoadMesh(mesh);
-      model->m_meshes.push_back(heMesh);
-    }
+    ProcessModelNode(model, scene, scene->mRootNode);
 
     m_models[path] = model;
     return model;
