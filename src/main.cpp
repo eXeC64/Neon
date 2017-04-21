@@ -127,18 +127,17 @@ int main(int argc, char **argv)
     pRenderer->SetViewPosition(cameraPos, cameraYaw, cameraTilt);
 
     pRenderer->AddTime(dt);
+
     pRenderer->BeginFrame();
     for(he::Mesh* mesh : pModel->m_meshes)
     {
       pRenderer->AddMesh(mesh, &mat, glm::mat4(1.0));
     }
 
-    for(int i = 1; i < 3; ++i)
-    {
-      glm::vec3 lightPos(9 * glm::sin(2*curTime * i), 1 + 2 * i, 5.5 * glm::cos(2*curTime * i));
-      glm::vec3 lightColor(i == 1 ? 1.0 : 0.0, 0.0, i == 1 ? 0.0 : 1.0);
-      pRenderer->AddLight(lightPos, lightColor);
-    }
+    pRenderer->AddLight(
+        glm::vec3(9 * glm::sin(2*curTime), 7, 5.5 * glm::cos(2*curTime)),
+        glm::vec3(1.0, 1.0, 1.0)
+    );
 
     pRenderer->EndFrame();
 
