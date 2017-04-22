@@ -102,6 +102,8 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  pRenderer->SetGlobalIllumination(glm::vec3(0.2));
+
   he::Loader loader;
 
   he::Model *pModel = loader.LoadModel("sibenik.obj");

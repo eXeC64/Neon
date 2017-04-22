@@ -40,6 +40,7 @@ namespace he
     void EndFrame(); //Draw current frame
 
     void SetViewPosition(glm::vec3 pos, float yaw, float tilt);
+    void SetGlobalIllumination(glm::vec3 color);
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
@@ -56,6 +57,7 @@ namespace he
     void DrawMeshInstance(const MeshInstance &model);
     void DrawLightInstance(const LightInstance &light);
     void UpdateProjectionMatrix();
+    void ApplyGlobalIllumination();
 
     bool m_bIsInit;
     bool m_bIsMidFrame;
@@ -68,6 +70,7 @@ namespace he
     float m_viewTilt;
     GLuint m_shdMesh;
     GLuint m_shdLight;
+    GLuint m_shdGlobalIllum;
     GLuint m_texDiffuse;
     GLuint m_texNormal;
     GLuint m_texDepth;
@@ -75,5 +78,6 @@ namespace he
     Mesh* m_pPlane;
     std::vector<MeshInstance> m_models;
     std::vector<LightInstance> m_lights;
+    glm::vec3 m_globalIllumColor;
   };
 }

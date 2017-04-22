@@ -42,6 +42,7 @@ namespace he
     m_viewTilt(0),
     m_shdMesh(0),
     m_shdLight(0),
+    m_shdGlobalIllum(0),
     m_texDiffuse(0),
     m_texNormal(0),
     m_texDepth(0),
@@ -55,6 +56,8 @@ namespace he
       glDeleteProgram(m_shdMesh);
     if(m_shdLight)
       glDeleteProgram(m_shdLight);
+    if(m_shdGlobalIllum)
+      glDeleteProgram(m_shdGlobalIllum);
     if(m_texDiffuse)
       glDeleteTextures(1, &m_texDiffuse);
     if(m_texNormal)
@@ -118,6 +121,10 @@ namespace he
     if(!m_shdLight)
       return false;
 
+    m_shdGlobalIllum = LoadShader("shaders/globalillum_vert.glsl", "shaders/globalillum_frag.glsl");
+    if(!m_shdGlobalIllum)
+      return false;
+
     m_pPlane = Loader::GeneratePlane();
     if(!m_pPlane)
       return false;
@@ -146,15 +153,12 @@ namespace he
     //Prepare for lighting pass
     SetupLightPass();
 
-    //Apply all our lights
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
+    //Perform global illumination
+    ApplyGlobalIllumination();
 
+    //Apply all our lights
     for (auto light : m_lights)
       DrawLightInstance(light);
-
-    glDisableVertexAttribArray(0);
 
     //TODO in future: final pass for transparent/translucent objects
 
@@ -236,9 +240,32 @@ namespace he
 
   void Renderer::DrawLightInstance(const LightInstance &light)
   {
+    glUseProgram(m_shdLight);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texNormal);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
+    glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUniform1f(glGetUniformLocation(m_shdLight, "time"), (float)m_curTime);
+    glUniform3f(glGetUniformLocation(m_shdLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
+    glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
+
     glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+
+    glDisableVertexAttribArray(0);
   }
 
   void Renderer::AddLight(glm::vec3 pos, glm::vec3 color)
@@ -352,22 +379,31 @@ namespace he
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_ONE, GL_ONE);
+  }
 
-    glUseProgram(m_shdLight);
+  void Renderer::SetGlobalIllumination(glm::vec3 color)
+  {
+    m_globalIllumColor = color;
+  }
+
+  void Renderer::ApplyGlobalIllumination()
+  {
+
+    glUseProgram(m_shdGlobalIllum);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_texNormal);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, m_texDepth);
 
-    glUniform1f(glGetUniformLocation(m_shdLight, "time"), (float)m_curTime);
-    glUniform3f(glGetUniformLocation(m_shdLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
-    glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
-    glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUniform2f(glGetUniformLocation(m_shdGlobalIllum, "screenSize"), (float)m_width, (float)m_height);
+    glUniform1i(glGetUniformLocation(m_shdGlobalIllum, "sampDiffuse"), 0);
+    glUniform3f(glGetUniformLocation(m_shdGlobalIllum, "color"), (float)m_globalIllumColor.x, (float)m_globalIllumColor.y, (float)m_globalIllumColor.z);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
+
+    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+
+    glDisableVertexAttribArray(0);
   }
 }
