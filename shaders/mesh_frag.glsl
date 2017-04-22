@@ -14,5 +14,5 @@ layout (location = 1) out vec3 outNormal;
 void main()
 {
   outDiffuse = texture(sampDiffuse, inUV).rgb;
-  outNormal = texture(sampNormal, inUV).xyz * inNormalMat;
+  outNormal = (texture(sampNormal, inUV).xyz * 2.0 - 1.0) * inNormalMat;
 }
