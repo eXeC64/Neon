@@ -20,6 +20,8 @@ namespace he
     ~Loader();
 
     static Mesh* GeneratePlane();
+    static Texture* GenerateBlankNormal();
+
     Model* LoadModel(const std::string &path);
     Texture* LoadPNG(const std::string &path, bool gammCorrect = true);
 

@@ -10,6 +10,7 @@ namespace he
 {
   class Mesh;
   class Material;
+  class Texture;
 
   struct MeshInstance
   {
@@ -76,6 +77,7 @@ namespace he
     GLuint m_texDepth;
     GLuint m_FBO;
     Mesh* m_pPlane;
+    Texture *m_pDefaultNormal;
     std::vector<MeshInstance> m_models;
     std::vector<LightInstance> m_lights;
     glm::vec3 m_globalIllumColor;

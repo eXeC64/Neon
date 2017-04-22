@@ -47,7 +47,8 @@ namespace he
     m_texNormal(0),
     m_texDepth(0),
     m_FBO(0),
-    m_pPlane(nullptr)
+    m_pPlane(nullptr),
+    m_pDefaultNormal(nullptr)
   {};
 
   Renderer::~Renderer()
@@ -68,6 +69,8 @@ namespace he
       glDeleteFramebuffers(1, &m_FBO);
     if(m_pPlane)
       delete m_pPlane;
+    if(m_pDefaultNormal)
+      delete m_pDefaultNormal;
   }
 
   bool Renderer::Init(int width, int height)
@@ -127,6 +130,10 @@ namespace he
 
     m_pPlane = Loader::GeneratePlane();
     if(!m_pPlane)
+      return false;
+
+    m_pDefaultNormal = Loader::GenerateBlankNormal();
+    if(!m_pDefaultNormal)
       return false;
 
     m_bIsInit = true;
@@ -213,14 +220,15 @@ namespace he
     }
 
     Texture *pNormal = model.mat->m_pNormal;
-    if(pNormal)
-    {
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
+
+    if(!pNormal)
+      pNormal = m_pDefaultNormal;
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glBindVertexArray(model.mesh->m_vaoConfig);
 
