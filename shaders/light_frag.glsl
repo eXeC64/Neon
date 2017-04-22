@@ -45,7 +45,7 @@ void main()
   float depth = texture(sampDepth, screenPos).x;
 
   vec3 lightDir = normalize(worldPos - lightPos);
-  float lambert = clamp(dot(lightDir,worldNormal), 0.15, 1.0);
+  float lambert = clamp(dot(lightDir, worldNormal), 0.15, 1.0);
   float lightDist = distance(lightPos, worldPos);
   float attenuation = 1.0 / (lightDist * lightDist);
   float light = 5.0 * lambert * attenuation;

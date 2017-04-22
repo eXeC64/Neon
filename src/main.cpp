@@ -108,7 +108,7 @@ int main(int argc, char **argv)
   he::Material mat(pDiffuse);
   he::Model *pModel = loader.LoadModel("sponza.obj");
 
-  glm::vec3 cameraPos(-10,-7,0);
+  glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
   float cameraTilt = 0;
 
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     double dt = curTime - lastTime;
     lastTime = curTime;
 
-    glm::vec3 cameraNorm = glm::vec3(glm::vec4(0,0,1,0) *
+    glm::vec3 cameraNorm = -glm::vec3(glm::vec4(0,0,1,0) *
       glm::rotate(glm::mat4(1.0), cameraTilt, glm::vec3(1,0,0)) *
       glm::rotate(glm::mat4(1.0), cameraYaw, glm::vec3(0,1,0)));
 
@@ -181,9 +181,9 @@ int main(int argc, char **argv)
     if(keyboard[SDL_SCANCODE_D])
       cameraPos += glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
     if(keyboard[SDL_SCANCODE_SPACE])
-      cameraPos -= glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
-    if(keyboard[SDL_SCANCODE_LCTRL])
       cameraPos += glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
+    if(keyboard[SDL_SCANCODE_LCTRL])
+      cameraPos -= glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
 
 
   }

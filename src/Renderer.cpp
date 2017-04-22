@@ -179,7 +179,7 @@ namespace he
     glm::mat4 rot =
       glm::rotate(glm::mat4(1.0), m_viewTilt, glm::vec3(1,0,0)) *
       glm::rotate(glm::mat4(1.0), m_viewYaw, glm::vec3(0,1,0));
-    glm::mat4 tran = glm::translate(glm::mat4(1.0), m_viewPos);
+    glm::mat4 tran = glm::translate(glm::mat4(1.0), -m_viewPos);
     m_matProjection = proj * rot * tran;
   }
 
@@ -236,7 +236,7 @@ namespace he
 
   void Renderer::DrawLightInstance(const LightInstance &light)
   {
-    glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), -light.pos.x, -light.pos.y, -light.pos.z);
+    glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), light.color.x, light.color.y, light.color.z);
     glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
   }
