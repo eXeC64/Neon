@@ -43,7 +43,7 @@ void main()
   vec3 worldPos = calcWorldPos();
   float depth = texture(sampDepth, screenPos).x;
 
-  vec3 lightDir = normalize(lightPos - worldPos);
+  vec3 lightDir = normalize(worldPos - lightPos);
   float light = clamp(dot(lightDir,worldNormal), 0.15, 1.0);
 
   outColor = vec3(0.5);
