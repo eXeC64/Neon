@@ -136,6 +136,10 @@ int main(int argc, char **argv)
     }
 
     pRenderer->AddLight(
+        cameraPos,
+        glm::vec3(1.0, 1.0, 1.0)
+    );
+    pRenderer->AddLight(
         glm::vec3(9 * glm::sin(2*curTime), 7, 5.5 * glm::cos(2*curTime)),
         glm::vec3(1.0, 1.0, 1.0)
     );

@@ -44,7 +44,9 @@ void main()
   float depth = texture(sampDepth, screenPos).x;
 
   vec3 lightDir = normalize(worldPos - lightPos);
-  float light = clamp(dot(lightDir,worldNormal), 0.15, 1.0);
+  float lambert = clamp(dot(lightDir,worldNormal), 0.15, 1.0);
+  float lightDist = distance(lightPos, worldPos);
+  float light = lambert * (10.0 / lightDist);
 
   outColor = vec3(0.5);
   if(depth < 1.0)

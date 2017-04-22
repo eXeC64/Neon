@@ -45,4 +45,5 @@ void main()
   rotNorm = vec3(rotationMatrix(cross(vec3(0,1,0), rotNorm), rotY) * vec4(rotNorm,1));
   rotNorm = vec3(rotationMatrix(cross(vec3(0,0,1), rotNorm), rotZ) * vec4(rotNorm,1));
   outNormal = rotNorm;
+  outNormal = inNormal;
 }
