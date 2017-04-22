@@ -106,13 +106,20 @@ int main(int argc, char **argv)
 
   he::Loader loader;
 
-  he::Model *pModel = loader.LoadModel("sibenik.obj");
+  /* he::Model *pModel = loader.LoadModel("meshes/nanosuit.obj"); */
+  /* he::Model *pModel = loader.LoadModel("meshes/sibenik.obj"); */
+  he::Model *pModel = loader.LoadModel("meshes/sponza.obj");
+  he::Mesh *pCube = loader.GenerateCube();
+  he::Texture *pDif = loader.LoadPNG("images/bricks_dif.png");
+  he::Texture *pNorm = loader.LoadPNG("images/bricks_norm.png", false);
+  he::Material matStone(pDif, pNorm);
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
   float cameraTilt = 0;
 
   double lastTime = SDL_GetTicks() / 1000.0;
+  double lightTime = 0.0;
 
   bool quit = false;
   while(!quit)
@@ -134,15 +141,25 @@ int main(int argc, char **argv)
     {
       pRenderer->AddMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
     }
+    pRenderer->AddMesh(pCube, &matStone, glm::mat4(1.0));
 
     pRenderer->AddLight(
         cameraPos,
         glm::vec3(1.0, 1.0, 1.0)
     );
-    pRenderer->AddLight(
-        glm::vec3(9 * glm::sin(2*curTime), 7, 5.5 * glm::cos(2*curTime)),
-        glm::vec3(1.0, 1.0, 1.0)
-    );
+
+    /* glm::vec3 lightPos(9 * glm::sin(2*lightTime), -10.0, 5.5 * glm::cos(2*lightTime)); */
+    glm::vec3 lightPos(9 * glm::sin(2*lightTime), 6.0, 5.5 * glm::cos(2*lightTime));
+    pRenderer->AddLight(lightPos, glm::vec3(1.0, 1.0, 1.0));
+
+    {
+      glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
+      glm::mat4 tran = glm::translate(glm::mat4(1.0), lightPos);
+      pRenderer->AddDebugCube(
+          tran * scale,
+          glm::vec3(1.0, 0.0, 0.0)
+      );
+    }
 
     pRenderer->EndFrame();
 
@@ -184,6 +201,13 @@ int main(int argc, char **argv)
       cameraPos += glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
     if(keyboard[SDL_SCANCODE_LCTRL])
       cameraPos -= glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
+    if(keyboard[SDL_SCANCODE_T])
+    {
+      if(keyboard[SDL_SCANCODE_LSHIFT])
+        lightTime -= dt;
+      else
+        lightTime += dt;
+    }
 
 
   }
