@@ -104,9 +104,7 @@ int main(int argc, char **argv)
 
   he::Loader loader;
 
-  he::Texture *pDiffuse = loader.LoadPNG("kamen.png");
-  he::Material mat(pDiffuse);
-  he::Model *pModel = loader.LoadModel("sponza.obj");
+  he::Model *pModel = loader.LoadModel("sibenik.obj");
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
