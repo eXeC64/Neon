@@ -21,7 +21,7 @@ namespace he
 
     static Mesh* GeneratePlane();
     Model* LoadModel(const std::string &path);
-    Texture* LoadPNG(const std::string &path);
+    Texture* LoadPNG(const std::string &path, bool gammCorrect = true);
 
   private:
     void ProcessModelNode(Model* model, const aiScene* scene, const aiNode* node);

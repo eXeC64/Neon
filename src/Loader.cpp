@@ -114,7 +114,7 @@ namespace he
         aiString str;
         material->GetTexture(aiTextureType_NORMALS, 0, &str);
         std::string path(str.C_Str());
-        normal = LoadPNG(path);
+        normal = LoadPNG(path, false /* no gamma correction */);
       }
       model->m_materials.push_back(new Material(diffuse, normal));
     }
@@ -150,7 +150,7 @@ namespace he
     return model;
   }
 
-  Texture* Loader::LoadPNG(const std::string &path)
+  Texture* Loader::LoadPNG(const std::string &path, bool gammaCorrect)
   {
     {
       auto it = m_textures.find(path);
@@ -199,7 +199,7 @@ namespace he
     pTex->m_height = width;
     glGenTextures(1, &pTex->m_glTexture);
     glBindTexture(GL_TEXTURE_2D, pTex->m_glTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, gammaCorrect ? GL_SRGB8 : GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
