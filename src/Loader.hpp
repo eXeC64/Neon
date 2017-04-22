@@ -20,6 +20,7 @@ namespace he
     ~Loader();
 
     static Mesh* GeneratePlane();
+    static Mesh* GenerateCube();
     static Texture* GenerateBlankNormal();
 
     Model* LoadModel(const std::string &path);

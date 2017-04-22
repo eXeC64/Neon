@@ -255,10 +255,96 @@ namespace he
        1, 1,0, 1,1, 0,0,1
     };
 
+    glGenVertexArrays(1, &pMesh->m_vaoConfig);
     glGenBuffers(1, &pMesh->m_vboVertices);
+
+    glBindVertexArray(pMesh->m_vaoConfig);
+
     glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+
+    glBindVertexArray(0);
+
+    return pMesh;
+  }
+
+  Mesh* Loader::GenerateCube()
+  {
+    Mesh *pMesh = new Mesh();
+
+    pMesh->m_iNumTris = 12;
+    pMesh->m_iStride = 8 * sizeof(GLfloat);
+    pMesh->m_iOffPos = 0 * sizeof(GLfloat);
+    pMesh->m_iOffUV = 3 * sizeof(GLfloat);
+    pMesh->m_iOffNormal = 5 * sizeof(GLfloat);
+
+    std::vector<GLfloat> data = {
+      -1,-1,-1, 0,0, 0,0,-1,
+      -1, 1,-1, 0,1, 0,0,-1,
+       1, 1,-1, 1,1, 0,0,-1,
+      -1,-1,-1, 0,0, 0,0,-1,
+       1, 1,-1, 1,1, 0,0,-1,
+       1,-1,-1, 1,0, 0,0,-1,
+
+      -1,-1, 1, 0,0, 0,0,1,
+       1, 1, 1, 1,1, 0,0,1,
+      -1, 1, 1, 0,1, 0,0,1,
+      -1,-1, 1, 0,0, 0,0,1,
+       1,-1, 1, 1,0, 0,0,1,
+       1, 1, 1, 1,1, 0,0,1,
+
+      -1,-1,-1, 0,0, 0,-1,0,
+       1,-1, 1, 1,1, 0,-1,0,
+      -1,-1, 1, 0,1, 0,-1,0,
+      -1,-1,-1, 0,0, 0,-1,0,
+       1,-1,-1, 1,0, 0,-1,0,
+       1,-1, 1, 1,1, 0,-1,0,
+
+      -1, 1,-1, 0,0, 0,1,0,
+      -1, 1, 1, 0,1, 0,1,0,
+       1, 1, 1, 1,1, 0,1,0,
+      -1, 1,-1, 0,0, 0,1,0,
+       1, 1, 1, 1,1, 0,1,0,
+       1, 1,-1, 1,0, 0,1,0,
+
+      -1,-1,-1, 0,0, -1,0,0,
+      -1,-1, 1, 0,1, -1,0,0,
+      -1, 1, 1, 1,1, -1,0,0,
+      -1,-1,-1, 0,0, -1,0,0,
+      -1, 1, 1, 1,1, -1,0,0,
+      -1, 1,-1, 1,0, -1,0,0,
+
+       1,-1,-1, 0,0, 1,0,0,
+       1, 1, 1, 1,1, 1,0,0,
+       1,-1, 1, 0,1, 1,0,0,
+       1,-1,-1, 0,0, 1,0,0,
+       1, 1,-1, 1,0, 1,0,0,
+       1, 1, 1, 1,1, 1,0,0,
+    };
+
+    glGenVertexArrays(1, &pMesh->m_vaoConfig);
+    glGenBuffers(1, &pMesh->m_vboVertices);
+
+    glBindVertexArray(pMesh->m_vaoConfig);
+
+    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+
+    glBindVertexArray(0);
 
     return pMesh;
   }

@@ -43,11 +43,13 @@ namespace he
     m_shdMesh(0),
     m_shdLight(0),
     m_shdGlobalIllum(0),
+    m_shdDebug(0),
     m_texDiffuse(0),
     m_texNormal(0),
     m_texDepth(0),
     m_FBO(0),
     m_pPlane(nullptr),
+    m_pCube(nullptr),
     m_pDefaultNormal(nullptr)
   {};
 
@@ -59,6 +61,8 @@ namespace he
       glDeleteProgram(m_shdLight);
     if(m_shdGlobalIllum)
       glDeleteProgram(m_shdGlobalIllum);
+    if(m_shdDebug)
+      glDeleteProgram(m_shdDebug);
     if(m_texDiffuse)
       glDeleteTextures(1, &m_texDiffuse);
     if(m_texNormal)
@@ -69,6 +73,8 @@ namespace he
       glDeleteFramebuffers(1, &m_FBO);
     if(m_pPlane)
       delete m_pPlane;
+    if(m_pCube)
+      delete m_pCube;
     if(m_pDefaultNormal)
       delete m_pDefaultNormal;
   }
@@ -128,8 +134,16 @@ namespace he
     if(!m_shdGlobalIllum)
       return false;
 
+    m_shdDebug = LoadShader("shaders/debug_vert.glsl", "shaders/debug_frag.glsl");
+    if(!m_shdDebug)
+      return false;
+
     m_pPlane = Loader::GeneratePlane();
     if(!m_pPlane)
+      return false;
+
+    m_pCube = Loader::GenerateCube();
+    if(!m_pCube)
       return false;
 
     m_pDefaultNormal = Loader::GenerateBlankNormal();
@@ -146,6 +160,7 @@ namespace he
     //Clear out existing lights and geometry
     m_models.clear();
     m_lights.clear();
+    m_debugCubes.clear();
   }
 
   void Renderer::EndFrame()
@@ -154,8 +169,10 @@ namespace he
     SetupGeometryPass();
 
     //Draw the geometry into the g buffers
-    for (auto model : m_models)
+    for (auto& model : m_models)
+    {
       DrawMeshInstance(model);
+    }
 
     //Prepare for lighting pass
     SetupLightPass();
@@ -164,10 +181,15 @@ namespace he
     ApplyGlobalIllumination();
 
     //Apply all our lights
-    for (auto light : m_lights)
+    for (auto& light : m_lights)
       DrawLightInstance(light);
 
+    SetupDebugPass();
     //TODO in future: final pass for transparent/translucent objects
+    for (auto& cube : m_debugCubes)
+    {
+      DrawDebugCube(cube);
+    }
 
     m_bIsMidFrame = false;
   }
@@ -267,18 +289,31 @@ namespace he
     glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), light.color.x, light.color.y, light.color.z);
 
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
-
+    glBindVertexArray(m_pPlane->m_vaoConfig);
     glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    glBindVertexArray(0);
+  }
 
-    glDisableVertexAttribArray(0);
+  void Renderer::DrawDebugCube(const DebugCubeInstance &cube)
+  {
+    glUseProgram(m_shdDebug);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdDebug, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdDebug, "matPos"), 1, GL_FALSE, &cube.pos[0][0]);
+    glUniform3f(glGetUniformLocation(m_shdDebug, "color"), cube.color.x, cube.color.y, cube.color.z);
+
+    glBindVertexArray(m_pCube->m_vaoConfig);
+    glDrawArrays(GL_TRIANGLES, 0, m_pCube->m_iNumTris*3);
+    glBindVertexArray(0);
   }
 
   void Renderer::AddLight(glm::vec3 pos, glm::vec3 color)
   {
     m_lights.push_back(LightInstance(pos, color));
+  }
+
+  void Renderer::AddDebugCube(glm::mat4 position, glm::vec3 color)
+  {
+    m_debugCubes.push_back(DebugCubeInstance(position, color));
   }
 
   void Renderer::AddTime(double dt)
@@ -372,6 +407,8 @@ namespace he
 
   void Renderer::SetupGeometryPass()
   {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
@@ -387,6 +424,14 @@ namespace he
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_ONE, GL_ONE);
+  }
+
+  void Renderer::SetupDebugPass()
+  {
+    glDisable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glDisable(GL_BLEND);
   }
 
   void Renderer::SetGlobalIllumination(glm::vec3 color)
