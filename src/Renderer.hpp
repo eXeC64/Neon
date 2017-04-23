@@ -88,6 +88,7 @@ namespace he
     GLuint m_shdDebug;
     GLuint m_texLambert;
     GLuint m_texNormal;
+    GLuint m_texPBRMaps;
     GLuint m_texDepth;
     GLuint m_FBO;
     Mesh* m_pPlane;

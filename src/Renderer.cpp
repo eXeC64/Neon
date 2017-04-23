@@ -46,6 +46,7 @@ namespace he
     m_shdDebug(0),
     m_texLambert(0),
     m_texNormal(0),
+    m_texPBRMaps(0),
     m_texDepth(0),
     m_FBO(0),
     m_pPlane(nullptr),
@@ -70,6 +71,8 @@ namespace he
       glDeleteTextures(1, &m_texLambert);
     if(m_texNormal)
       glDeleteTextures(1, &m_texNormal);
+    if(m_texPBRMaps)
+      glDeleteTextures(1, &m_texPBRMaps);
     if(m_texDepth)
       glDeleteTextures(1, &m_texDepth);
     if(m_FBO)
@@ -99,22 +102,26 @@ namespace he
 
     m_texLambert = GenerateBuffer(GL_RGB8, GL_RGB, GL_COLOR_ATTACHMENT0, m_width, m_height);
     m_texNormal = GenerateBuffer(GL_RGB16F, GL_RGB, GL_COLOR_ATTACHMENT1, m_width, m_height);
+    m_texPBRMaps = GenerateBuffer(GL_RG16F, GL_RG, GL_COLOR_ATTACHMENT2, m_width, m_height);
     m_texDepth = GenerateBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT, m_width, m_height);
 
     GLenum drawBuffers[] = {
       GL_COLOR_ATTACHMENT0,
-      GL_COLOR_ATTACHMENT1
+      GL_COLOR_ATTACHMENT1,
+      GL_COLOR_ATTACHMENT2
     };
-    glDrawBuffers(2, drawBuffers);
+    glDrawBuffers(sizeof drawBuffers / sizeof drawBuffers[0], drawBuffers);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
       glDeleteTextures(1, &m_texLambert);
       glDeleteTextures(1, &m_texNormal);
+      glDeleteTextures(1, &m_texPBRMaps);
       glDeleteTextures(1, &m_texDepth);
       glDeleteFramebuffers(1, &m_FBO);
       m_texLambert = 0;
       m_texNormal = 0;
+      m_texPBRMaps = 0;
       m_texDepth = 0;
       m_FBO = 0;
       return false;
@@ -310,9 +317,14 @@ namespace he
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_texLambert);
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, m_texNormal);
+
     glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
+
+    glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_texDepth);
 
     glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
@@ -321,7 +333,8 @@ namespace he
     glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
     glUniform1i(glGetUniformLocation(m_shdLight, "sampLambert"), 0);
     glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampPBRMaps"), 2);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 3);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), light.color.x, light.color.y, light.color.z);
 

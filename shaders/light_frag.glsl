@@ -6,6 +6,7 @@ layout (location = 0) out vec3 outColor;
 
 uniform sampler2D sampLambert;
 uniform sampler2D sampNormal;
+uniform sampler2D sampPBRMaps;
 uniform sampler2D sampDepth;
 
 uniform float time;
@@ -40,7 +41,7 @@ void main()
 {
   vec2 screenPos = gl_FragCoord.xy / screenSize;
   vec3 lambert = texture(sampLambert, screenPos).rgb;
-  vec3 worldNormal = normalize(texture(sampNormal, screenPos).xyz);
+  vec3 worldNormal = texture(sampNormal, screenPos).xyz;
   vec3 worldPos = calcWorldPos(screenPos);
   float depth = texture(sampDepth, screenPos).x;
 
