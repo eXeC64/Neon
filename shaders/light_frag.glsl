@@ -48,7 +48,7 @@ void main()
   float lambert = clamp(dot(lightDir, worldNormal), 0.0, 1.0);
   float lightDist = distance(lightPos, worldPos);
   float attenuation = 1.0 / (lightDist * lightDist);
-  float light = 5.0 * lambert * attenuation;
+  float light = 1.0 * lambert * attenuation;
 
   outColor = vec3(0.5);
   if(depth < 1.0)
