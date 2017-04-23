@@ -50,8 +50,10 @@ namespace he
     m_FBO(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
+    m_pDefaultLambert(nullptr),
     m_pDefaultNormal(nullptr),
-    m_pDefaultLambert(nullptr)
+    m_pDefaultMetallic(nullptr),
+    m_pDefaultRoughness(nullptr)
   {};
 
   Renderer::~Renderer()
@@ -76,10 +78,14 @@ namespace he
       delete m_pPlane;
     if(m_pCube)
       delete m_pCube;
-    if(m_pDefaultNormal)
-      delete m_pDefaultNormal;
     if(m_pDefaultLambert)
       delete m_pDefaultLambert;
+    if(m_pDefaultNormal)
+      delete m_pDefaultNormal;
+    if(m_pDefaultMetallic)
+      delete m_pDefaultMetallic;
+    if(m_pDefaultRoughness)
+      delete m_pDefaultRoughness;
   }
 
   bool Renderer::Init(int width, int height)
@@ -149,12 +155,20 @@ namespace he
     if(!m_pCube)
       return false;
 
+    m_pDefaultLambert = Loader::GeneratePurpleCheques();
+    if(!m_pDefaultLambert)
+      return false;
+
     m_pDefaultNormal = Loader::GenerateBlankNormal();
     if(!m_pDefaultNormal)
       return false;
 
-    m_pDefaultLambert = Loader::GeneratePurpleCheques();
-    if(!m_pDefaultLambert)
+    m_pDefaultMetallic = Loader::GenerateBlankMap(0);
+    if(!m_pDefaultMetallic)
+      return false;
+
+    m_pDefaultRoughness = Loader::GenerateBlankMap(255);
+    if(!m_pDefaultRoughness)
       return false;
 
     m_bIsInit = true;
@@ -238,22 +252,41 @@ namespace he
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
 
-    Texture *pLambert = model.mat->m_pLambert;
-    if(!pLambert)
-      pLambert = m_pDefaultLambert;
+    {
+      Texture *pLambert = model.mat->m_pLambert;
+      if(!pLambert)
+        pLambert = m_pDefaultLambert;
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, pLambert->m_glTexture);
+      glUniform1i(glGetUniformLocation(m_shdMesh, "sampLambert"), 0);
+    }
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, pLambert->m_glTexture);
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampLambert"), 0);
+    {
+      Texture *pNormal = model.mat->m_pNormal;
+      if(!pNormal)
+        pNormal = m_pDefaultNormal;
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
+      glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
+    }
 
-    Texture *pNormal = model.mat->m_pNormal;
+    {
+      Texture *pMetallic = model.mat->m_pMetallic;
+      if(!pMetallic)
+        pMetallic = m_pDefaultMetallic;
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, pMetallic->m_glTexture);
+      glUniform1i(glGetUniformLocation(m_shdMesh, "sampMetallic"), 2);
+    }
 
-    if(!pNormal)
-      pNormal = m_pDefaultNormal;
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
+    {
+      Texture *pRoughness = model.mat->m_pRoughness;
+      if(!pRoughness)
+        pRoughness = m_pDefaultRoughness;
+      glActiveTexture(GL_TEXTURE3);
+      glBindTexture(GL_TEXTURE_2D, pRoughness->m_glTexture);
+      glUniform1i(glGetUniformLocation(m_shdMesh, "sampRoughness"), 3);
+    }
 
     glBindVertexArray(model.mesh->m_vaoConfig);
 

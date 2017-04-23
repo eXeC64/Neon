@@ -29,6 +29,7 @@ namespace he
     static Mesh* GeneratePlane();
     static Mesh* GenerateCube();
     static Texture* GenerateBlankNormal();
+    static Texture* GenerateBlankMap(unsigned char value);
     static Texture* GeneratePurpleCheques();
 
     Model* LoadModel(const std::string &path);

@@ -92,8 +92,10 @@ namespace he
     GLuint m_FBO;
     Mesh* m_pPlane;
     Mesh* m_pCube;
-    Texture *m_pDefaultNormal;
     Texture *m_pDefaultLambert;
+    Texture *m_pDefaultNormal;
+    Texture *m_pDefaultMetallic;
+    Texture *m_pDefaultRoughness;
     std::vector<MeshInstance> m_models;
     std::vector<LightInstance> m_lights;
     std::vector<DebugCubeInstance> m_debugCubes;

@@ -21,6 +21,8 @@ void APIENTRY glDebugOutput(GLenum source,
                             const GLchar *message,
                             const void *userParam)
 {
+  (void)length;
+  (void)userParam;
   // ignore non-significant error/warning codes
   if(id == 131204 || id == 131185)
     return;
