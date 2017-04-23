@@ -4,7 +4,7 @@ precision highp float;
 
 layout (location = 0) out vec3 outColor;
 
-uniform sampler2D sampDiffuse;
+uniform sampler2D sampLambert;
 uniform sampler2D sampNormal;
 uniform sampler2D sampDepth;
 
@@ -39,20 +39,20 @@ vec3 calcWorldPos(vec2 screenPos)
 void main()
 {
   vec2 screenPos = gl_FragCoord.xy / screenSize;
-  vec3 diffuse = texture(sampDiffuse, screenPos).rgb;
+  vec3 lambert = texture(sampLambert, screenPos).rgb;
   vec3 worldNormal = normalize(texture(sampNormal, screenPos).xyz);
   vec3 worldPos = calcWorldPos(screenPos);
   float depth = texture(sampDepth, screenPos).x;
 
   vec3 lightDir = normalize(lightPos - worldPos);
-  float lambert = clamp(dot(lightDir, worldNormal), 0.0, 1.0);
+  float lightPower = clamp(dot(lightDir, worldNormal), 0.0, 1.0);
   float lightDist = distance(lightPos, worldPos);
   float attenuation = 1.0 / (lightDist * lightDist);
-  float light = 1.0 * lambert * attenuation;
+  float light = 1.0 * lightPower * attenuation;
 
   outColor = vec3(0.5);
   if(depth < 1.0)
   {
-    outColor = gammaCorrect(2.2, lightColor * light * diffuse);
+    outColor = gammaCorrect(2.2, lightColor * light * lambert);
   }
 }

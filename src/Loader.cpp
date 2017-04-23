@@ -100,14 +100,14 @@ namespace he
       model->m_meshes.push_back(heMesh);
 
       const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-      Texture *diffuse = nullptr;
+      Texture *lambert = nullptr;
       Texture *normal = nullptr;
       if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
       {
         aiString str;
         material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
         std::string path(str.C_Str());
-        diffuse = LoadTexture(path, TextureFormat::Color);
+        lambert = LoadTexture(path, TextureFormat::Color);
       }
       if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
       {
@@ -116,7 +116,7 @@ namespace he
         std::string path(str.C_Str());
         normal = LoadTexture(path, TextureFormat::Normal);
       }
-      model->m_materials.push_back(new Material(diffuse, normal));
+      model->m_materials.push_back(new Material(lambert, normal));
     }
     for(GLuint i = 0; i < node->mNumChildren; ++i)
     {
@@ -150,7 +150,7 @@ namespace he
     return model;
   }
 
-  Texture* Loader::LoadTexture(const std::string &path, enum class TextureFormat format)
+  Texture* Loader::LoadTexture(const std::string &path, enum TextureFormat format)
   {
     {
       auto it = m_textures.find(path);

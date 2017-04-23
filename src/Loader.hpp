@@ -32,7 +32,7 @@ namespace he
     static Texture* GeneratePurpleCheques();
 
     Model* LoadModel(const std::string &path);
-    Texture* LoadTexture(const std::string &path, enum class TextureFormat format);
+    Texture* LoadTexture(const std::string &path, enum TextureFormat format);
 
   private:
     void ProcessModelNode(Model* model, const aiScene* scene, const aiNode* node);

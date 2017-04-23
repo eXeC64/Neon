@@ -44,14 +44,14 @@ namespace he
     m_shdLight(0),
     m_shdGlobalIllum(0),
     m_shdDebug(0),
-    m_texDiffuse(0),
+    m_texLambert(0),
     m_texNormal(0),
     m_texDepth(0),
     m_FBO(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
     m_pDefaultNormal(nullptr),
-    m_pDefaultDiffuse(nullptr)
+    m_pDefaultLambert(nullptr)
   {};
 
   Renderer::~Renderer()
@@ -64,8 +64,8 @@ namespace he
       glDeleteProgram(m_shdGlobalIllum);
     if(m_shdDebug)
       glDeleteProgram(m_shdDebug);
-    if(m_texDiffuse)
-      glDeleteTextures(1, &m_texDiffuse);
+    if(m_texLambert)
+      glDeleteTextures(1, &m_texLambert);
     if(m_texNormal)
       glDeleteTextures(1, &m_texNormal);
     if(m_texDepth)
@@ -78,8 +78,8 @@ namespace he
       delete m_pCube;
     if(m_pDefaultNormal)
       delete m_pDefaultNormal;
-    if(m_pDefaultDiffuse)
-      delete m_pDefaultDiffuse;
+    if(m_pDefaultLambert)
+      delete m_pDefaultLambert;
   }
 
   bool Renderer::Init(int width, int height)
@@ -91,7 +91,7 @@ namespace he
     glGenFramebuffers(1, &m_FBO);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
 
-    m_texDiffuse = GenerateBuffer(GL_RGB8, GL_RGB, GL_COLOR_ATTACHMENT0, m_width, m_height);
+    m_texLambert = GenerateBuffer(GL_RGB8, GL_RGB, GL_COLOR_ATTACHMENT0, m_width, m_height);
     m_texNormal = GenerateBuffer(GL_RGB16F, GL_RGB, GL_COLOR_ATTACHMENT1, m_width, m_height);
     m_texDepth = GenerateBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT, m_width, m_height);
 
@@ -103,11 +103,11 @@ namespace he
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-      glDeleteTextures(1, &m_texDiffuse);
+      glDeleteTextures(1, &m_texLambert);
       glDeleteTextures(1, &m_texNormal);
       glDeleteTextures(1, &m_texDepth);
       glDeleteFramebuffers(1, &m_FBO);
-      m_texDiffuse = 0;
+      m_texLambert = 0;
       m_texNormal = 0;
       m_texDepth = 0;
       m_FBO = 0;
@@ -153,8 +153,8 @@ namespace he
     if(!m_pDefaultNormal)
       return false;
 
-    m_pDefaultDiffuse = Loader::GeneratePurpleCheques();
-    if(!m_pDefaultDiffuse)
+    m_pDefaultLambert = Loader::GeneratePurpleCheques();
+    if(!m_pDefaultLambert)
       return false;
 
     m_bIsInit = true;
@@ -238,13 +238,13 @@ namespace he
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
 
-    Texture *pDiffuse = model.mat->m_pDiffuse;
-    if(!pDiffuse)
-      pDiffuse = m_pDefaultDiffuse;
+    Texture *pLambert = model.mat->m_pLambert;
+    if(!pLambert)
+      pLambert = m_pDefaultLambert;
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, pDiffuse->m_glTexture);
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
+    glBindTexture(GL_TEXTURE_2D, pLambert->m_glTexture);
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampLambert"), 0);
 
     Texture *pNormal = model.mat->m_pNormal;
 
@@ -276,7 +276,7 @@ namespace he
     glUseProgram(m_shdLight);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
+    glBindTexture(GL_TEXTURE_2D, m_texLambert);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, m_texNormal);
     glActiveTexture(GL_TEXTURE2);
@@ -286,7 +286,7 @@ namespace he
     glUniform1f(glGetUniformLocation(m_shdLight, "time"), (float)m_curTime);
     glUniform3f(glGetUniformLocation(m_shdLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
     glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampDiffuse"), 0);
+    glUniform1i(glGetUniformLocation(m_shdLight, "sampLambert"), 0);
     glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
     glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 2);
     glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
@@ -448,11 +448,11 @@ namespace he
     glUseProgram(m_shdGlobalIllum);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_texDiffuse);
+    glBindTexture(GL_TEXTURE_2D, m_texLambert);
 
     glUniform2f(glGetUniformLocation(m_shdGlobalIllum, "screenSize"), (float)m_width, (float)m_height);
-    glUniform1i(glGetUniformLocation(m_shdGlobalIllum, "sampDiffuse"), 0);
-    glUniform3f(glGetUniformLocation(m_shdGlobalIllum, "color"), (float)m_globalIllumColor.x, (float)m_globalIllumColor.y, (float)m_globalIllumColor.z);
+    glUniform1i(glGetUniformLocation(m_shdGlobalIllum, "sampColor"), 0);
+    glUniform3f(glGetUniformLocation(m_shdGlobalIllum, "lightColor"), (float)m_globalIllumColor.x, (float)m_globalIllumColor.y, (float)m_globalIllumColor.z);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);

@@ -86,14 +86,14 @@ namespace he
     GLuint m_shdLight;
     GLuint m_shdGlobalIllum;
     GLuint m_shdDebug;
-    GLuint m_texDiffuse;
+    GLuint m_texLambert;
     GLuint m_texNormal;
     GLuint m_texDepth;
     GLuint m_FBO;
     Mesh* m_pPlane;
     Mesh* m_pCube;
     Texture *m_pDefaultNormal;
-    Texture *m_pDefaultDiffuse;
+    Texture *m_pDefaultLambert;
     std::vector<MeshInstance> m_models;
     std::vector<LightInstance> m_lights;
     std::vector<DebugCubeInstance> m_debugCubes;
