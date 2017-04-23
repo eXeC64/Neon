@@ -107,14 +107,14 @@ namespace he
         aiString str;
         material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
         std::string path(str.C_Str());
-        diffuse = LoadPNG(path);
+        diffuse = LoadTexture(path, TextureFormat::Color);
       }
       if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
       {
         aiString str;
         material->GetTexture(aiTextureType_NORMALS, 0, &str);
         std::string path(str.C_Str());
-        normal = LoadPNG(path, false /* no gamma correction */);
+        normal = LoadTexture(path, TextureFormat::Normal);
       }
       model->m_materials.push_back(new Material(diffuse, normal));
     }
@@ -150,7 +150,7 @@ namespace he
     return model;
   }
 
-  Texture* Loader::LoadPNG(const std::string &path, bool gammaCorrect)
+  Texture* Loader::LoadTexture(const std::string &path, enum class TextureFormat format)
   {
     {
       auto it = m_textures.find(path);
@@ -191,15 +191,33 @@ namespace he
       memcpy(&data[0]+(bytesPerRow * (height-1-i)), rowPointers[i], bytesPerRow);
 
     png_destroy_read_struct(&pPNG, &pInfo, NULL);
-
     fclose(fp);
+
+    GLuint internalFormat;
+    switch(format)
+    {
+      case TextureFormat::Color:
+        internalFormat = GL_SRGB8;
+        break;
+
+      case TextureFormat::Normal:
+        internalFormat = GL_RGB8;
+        break;
+
+      case TextureFormat::Map:
+        internalFormat = GL_R8;
+        break;
+
+      default:
+        internalFormat = GL_RGB8;
+    }
 
     Texture *pTex = new Texture();
     pTex->m_width = width;
     pTex->m_height = width;
     glGenTextures(1, &pTex->m_glTexture);
     glBindTexture(GL_TEXTURE_2D, pTex->m_glTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, gammaCorrect ? GL_SRGB8 : GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

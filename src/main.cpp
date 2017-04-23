@@ -110,8 +110,8 @@ int main(int argc, char **argv)
   /* he::Model *pModel = loader.LoadModel("meshes/sibenik.obj"); */
   he::Model *pModel = loader.LoadModel("meshes/sponza.obj");
   he::Mesh *pCube = loader.GenerateCube();
-  he::Texture *pDif = loader.LoadPNG("images/bricks_dif.png");
-  he::Texture *pNorm = loader.LoadPNG("images/bricks_norm.png", false);
+  he::Texture *pDif = loader.LoadTexture("images/bricks_dif.png", he::TextureFormat::Color);
+  he::Texture *pNorm = loader.LoadTexture("images/bricks_norm.png", he::TextureFormat::Normal);
   he::Material matStone(pDif, pNorm);
 
   glm::vec3 cameraPos(10,7,0);
@@ -141,7 +141,8 @@ int main(int argc, char **argv)
     {
       pRenderer->AddMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
     }
-    pRenderer->AddMesh(pCube, &matStone, glm::mat4(1.0));
+    pRenderer->AddMesh(pCube, &matStone, glm::translate(glm::mat4(1.0), glm::vec3(0, 3, 0)));
+
 
     pRenderer->AddLight(
         cameraPos,
