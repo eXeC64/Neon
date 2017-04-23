@@ -50,7 +50,8 @@ namespace he
     m_FBO(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
-    m_pDefaultNormal(nullptr)
+    m_pDefaultNormal(nullptr),
+    m_pDefaultDiffuse(nullptr)
   {};
 
   Renderer::~Renderer()
@@ -77,6 +78,8 @@ namespace he
       delete m_pCube;
     if(m_pDefaultNormal)
       delete m_pDefaultNormal;
+    if(m_pDefaultDiffuse)
+      delete m_pDefaultDiffuse;
   }
 
   bool Renderer::Init(int width, int height)
@@ -148,6 +151,10 @@ namespace he
 
     m_pDefaultNormal = Loader::GenerateBlankNormal();
     if(!m_pDefaultNormal)
+      return false;
+
+    m_pDefaultDiffuse = Loader::GeneratePurpleCheques();
+    if(!m_pDefaultDiffuse)
       return false;
 
     m_bIsInit = true;
@@ -232,14 +239,12 @@ namespace he
 
 
     Texture *pDiffuse = model.mat->m_pDiffuse;
-    if(pDiffuse)
-    {
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, pDiffuse->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
+    if(!pDiffuse)
+      pDiffuse = m_pDefaultDiffuse;
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, pDiffuse->m_glTexture);
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampDiffuse"), 0);
 
     Texture *pNormal = model.mat->m_pNormal;
 
@@ -249,8 +254,6 @@ namespace he
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
     glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glBindVertexArray(model.mesh->m_vaoConfig);
 

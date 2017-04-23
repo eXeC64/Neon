@@ -200,8 +200,8 @@ namespace he
     glGenTextures(1, &pTex->m_glTexture);
     glBindTexture(GL_TEXTURE_2D, pTex->m_glTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, gammaCorrect ? GL_SRGB8 : GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &data[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -228,10 +228,41 @@ namespace he
     glGenTextures(1, &pTex->m_glTexture);
     glBindTexture(GL_TEXTURE_2D, pTex->m_glTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return pTex;
+  }
+
+  Texture* Loader::GeneratePurpleCheques()
+  {
+    const int size = 8;
+    //Create a 8x8 purple chequerboard texture
+    std::vector<unsigned char> pixels(size*size*3, 0);
+    for(size_t i = 0; i < pixels.size(); i += 3)
+    {
+      size_t x = i % (8*3);
+      size_t y = i / (8*3);
+      if((x % 2) ^ (y % 2))
+      {
+        pixels[i+0] = 255;
+        pixels[i+2] = 255;
+      }
+    }
+
+    Texture *pTex = new Texture();
+    pTex->m_width = size;
+    pTex->m_height = size;
+    glGenTextures(1, &pTex->m_glTexture);
+    glBindTexture(GL_TEXTURE_2D, pTex->m_glTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, size, size, 0, GL_RGB, GL_UNSIGNED_BYTE, &pixels[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return pTex;

@@ -93,6 +93,7 @@ namespace he
     Mesh* m_pPlane;
     Mesh* m_pCube;
     Texture *m_pDefaultNormal;
+    Texture *m_pDefaultDiffuse;
     std::vector<MeshInstance> m_models;
     std::vector<LightInstance> m_lights;
     std::vector<DebugCubeInstance> m_debugCubes;
