@@ -29,9 +29,9 @@ namespace he
     glm::vec3 color;
   };
 
-  struct DebugCubeInstance
+  struct DebugInstance
   {
-    DebugCubeInstance(glm::mat4 pos, glm::vec3 color)
+    DebugInstance(glm::mat4 pos, glm::vec3 color)
       : pos(pos), color(color) {};
     glm::mat4 pos;
     glm::vec3 color;
@@ -57,6 +57,7 @@ namespace he
 
     //Add debug output
     void AddDebugCube(glm::mat4 position, glm::vec3 color);
+    void AddDebugSphere(glm::mat4 position, glm::vec3 color);
 
     //Add to current time value
     void AddTime(double dt);
@@ -69,7 +70,7 @@ namespace he
     void SetupDebugPass();
     void DrawMeshInstance(const MeshInstance &model);
     void DrawLightInstance(const LightInstance &light);
-    void DrawDebugCube(const DebugCubeInstance &cube);
+    void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
 
@@ -93,13 +94,15 @@ namespace he
     GLuint m_FBO;
     Mesh* m_pPlane;
     Mesh* m_pCube;
+    Mesh* m_pSphere;
     Texture *m_pDefaultLambert;
     Texture *m_pDefaultNormal;
     Texture *m_pDefaultMetallic;
     Texture *m_pDefaultRoughness;
     std::vector<MeshInstance> m_models;
     std::vector<LightInstance> m_lights;
-    std::vector<DebugCubeInstance> m_debugCubes;
+    std::vector<DebugInstance> m_debugCubes;
+    std::vector<DebugInstance> m_debugSpheres;
     glm::vec3 m_globalIllumColor;
   };
 }

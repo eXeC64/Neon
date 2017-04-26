@@ -146,22 +146,21 @@ int main(int argc, char **argv)
     pRenderer->AddMesh(pCube, &matStone, glm::translate(glm::mat4(1.0), glm::vec3(0, 3, 0)));
 
 
-    pRenderer->AddLight(
-        cameraPos,
-        glm::vec3(1.0, 1.0, 1.0)
-    );
+    /* pRenderer->AddLight( */
+    /*     cameraPos, */
+    /*     glm::vec3(1.0, 1.0, 1.0) */
+    /* ); */
 
     /* glm::vec3 lightPos(9 * glm::sin(2*lightTime), -10.0, 5.5 * glm::cos(2*lightTime)); */
-    glm::vec3 lightPos(9 * glm::sin(2*lightTime), 6.0, 5.5 * glm::cos(2*lightTime));
+    glm::vec3 lightPos(9 * glm::sin(2*lightTime), 5.5, 5.5 * glm::cos(2*lightTime));
     pRenderer->AddLight(lightPos, glm::vec3(1.0, 1.0, 1.0));
 
     {
-      glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
+      glm::mat4 sScale = glm::scale(glm::mat4(1.0), glm::vec3(5));
+      glm::mat4 cScale = glm::scale(glm::mat4(1.0), glm::vec3(0.5));
       glm::mat4 tran = glm::translate(glm::mat4(1.0), lightPos);
-      pRenderer->AddDebugCube(
-          tran * scale,
-          glm::vec3(1.0, 0.0, 0.0)
-      );
+      pRenderer->AddDebugSphere(tran * sScale, glm::vec3(1.0, 1.0, 1.0));
+      pRenderer->AddDebugCube(tran * cScale, glm::vec3(1.0, 0.0, 0.0));
     }
 
     pRenderer->EndFrame();

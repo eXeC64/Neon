@@ -51,6 +51,7 @@ namespace he
     m_FBO(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
+    m_pSphere(nullptr),
     m_pDefaultLambert(nullptr),
     m_pDefaultNormal(nullptr),
     m_pDefaultMetallic(nullptr),
@@ -81,6 +82,8 @@ namespace he
       delete m_pPlane;
     if(m_pCube)
       delete m_pCube;
+    if(m_pSphere)
+      delete m_pSphere;
     if(m_pDefaultLambert)
       delete m_pDefaultLambert;
     if(m_pDefaultNormal)
@@ -162,6 +165,10 @@ namespace he
     if(!m_pCube)
       return false;
 
+    m_pSphere = Loader::GenerateSphere();
+    if(!m_pSphere)
+      return false;
+
     m_pDefaultLambert = Loader::GeneratePurpleCheques();
     if(!m_pDefaultLambert)
       return false;
@@ -189,6 +196,7 @@ namespace he
     m_models.clear();
     m_lights.clear();
     m_debugCubes.clear();
+    m_debugSpheres.clear();
   }
 
   void Renderer::EndFrame()
@@ -212,12 +220,13 @@ namespace he
     for (auto& light : m_lights)
       DrawLightInstance(light);
 
-    SetupDebugPass();
     //TODO in future: final pass for transparent/translucent objects
+
+    SetupDebugPass();
     for (auto& cube : m_debugCubes)
-    {
-      DrawDebugCube(cube);
-    }
+      DrawDebugMesh(m_pCube, cube);
+    for (auto& sphere : m_debugSpheres)
+      DrawDebugMesh(m_pSphere, sphere);
 
     m_bIsMidFrame = false;
   }
@@ -343,15 +352,19 @@ namespace he
     glBindVertexArray(0);
   }
 
-  void Renderer::DrawDebugCube(const DebugCubeInstance &cube)
+  void Renderer::DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance)
   {
     glUseProgram(m_shdDebug);
     glUniformMatrix4fv(glGetUniformLocation(m_shdDebug, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(m_shdDebug, "matPos"), 1, GL_FALSE, &cube.pos[0][0]);
-    glUniform3f(glGetUniformLocation(m_shdDebug, "color"), cube.color.x, cube.color.y, cube.color.z);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdDebug, "matPos"), 1, GL_FALSE, &instance.pos[0][0]);
+    glUniform3f(glGetUniformLocation(m_shdDebug, "color"), instance.color.x, instance.color.y, instance.color.z);
 
-    glBindVertexArray(m_pCube->m_vaoConfig);
-    glDrawArrays(GL_TRIANGLES, 0, m_pCube->m_iNumTris*3);
+    glBindVertexArray(mesh->m_vaoConfig);
+    if(mesh->m_iNumIndices > 0) {
+      glDrawElements(GL_TRIANGLES, mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+    } else {
+      glDrawArrays(GL_TRIANGLES, 0, mesh->m_iNumTris*3);
+    }
     glBindVertexArray(0);
   }
 
@@ -362,7 +375,12 @@ namespace he
 
   void Renderer::AddDebugCube(glm::mat4 position, glm::vec3 color)
   {
-    m_debugCubes.push_back(DebugCubeInstance(position, color));
+    m_debugCubes.push_back(DebugInstance(position, color));
+  }
+
+  void Renderer::AddDebugSphere(glm::mat4 position, glm::vec3 color)
+  {
+    m_debugSpheres.push_back(DebugInstance(position, color));
   }
 
   void Renderer::AddTime(double dt)
