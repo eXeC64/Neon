@@ -56,4 +56,5 @@ void main()
   {
     outColor = gammaCorrect(2.2, lightColor * light * lambert);
   }
+  gl_FragDepth = depth;
 }

@@ -489,7 +489,6 @@ namespace he
     glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
@@ -525,5 +524,6 @@ namespace he
     glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
 
     glDisableVertexAttribArray(0);
+    glClear(GL_DEPTH_BUFFER_BIT);
   }
 }
