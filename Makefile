@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean run
 
 CXXFLAGS = -g -W -Wall -std=c++14 `sdl2-config --cflags`
 LDFLAGS = -lGL -lpng `sdl2-config --libs` -lassimp
@@ -16,3 +16,6 @@ build/%.o: src/%.cpp
 
 clean:
 	$(RM) $(TARGET) $(OBJS)
+
+run: $(TARGET)
+	./$(TARGET)
