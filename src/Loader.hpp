@@ -28,6 +28,7 @@ namespace he
 
     static Mesh* GeneratePlane();
     static Mesh* GenerateCube();
+    static Mesh* GenerateSphere();
     static Texture* GenerateBlankNormal();
     static Texture* GenerateBlankMap(unsigned char value);
     static Texture* GeneratePurpleCheques();

@@ -8,7 +8,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <glm/vec2.hpp>
+#include <glm/ext.hpp>
 #include <png.h>
 #include <vector>
 
@@ -410,6 +410,134 @@ namespace he
 
     glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+
+    glBindVertexArray(0);
+
+    return pMesh;
+  }
+
+  Mesh* Loader::GenerateSphere()
+  {
+    std::vector<GLfloat> verts;
+    std::vector<GLuint> indices;
+
+    const int numRows = 12;
+    const int numCols = 18;
+    const int firstRingBaseIndex = 2;
+    const int lastRingBaseIndex = firstRingBaseIndex + (numRows-2) * numCols;
+    const float colInc = 2.0 * glm::pi<float>() / numCols;
+
+    //Poles
+    verts.push_back(0.0); //x
+    verts.push_back(0.5); //y
+    verts.push_back(0.0); //z
+    verts.push_back(0.0); //u
+    verts.push_back(0.0); //v
+    verts.push_back(0.0); //normal.x
+    verts.push_back(1.0); //normal.y
+    verts.push_back(0.0); //normal.z
+
+    verts.push_back(0.0); //x
+    verts.push_back(-0.5); //y
+    verts.push_back(0.0); //z
+    verts.push_back(0.0); //u
+    verts.push_back(0.0); //v
+    verts.push_back(0.0); //normal.x
+    verts.push_back(-1.0); //normal.y
+    verts.push_back(0.0); //normal.z
+
+    for(int i = 1; i < numRows - 0; ++i)
+    {
+      const float y = 0.5 * cos(i / glm::pi<float>());
+      const float r = 0.5;
+      const float width = glm::sqrt(r * r - y * y);
+
+      for(int j = 1; j <= numCols; ++j)
+      {
+        const float x = sin(j * colInc) * width;
+        const float z = cos(j * colInc) * width;
+        const glm::vec3 normal = glm::normalize(glm::vec3(x,y,z));
+
+        verts.push_back(x);
+        verts.push_back(y);
+        verts.push_back(z);
+
+        //U,V
+        verts.push_back(0.0);
+        verts.push_back(0.0);
+
+        verts.push_back(normal.x);
+        verts.push_back(normal.y);
+        verts.push_back(normal.z);
+      }
+    }
+
+    //Calculate indices for top pole
+    for(int i = 0; i < numCols; ++i)
+    {
+      const int left = i;
+      const int right = (i + 1) % numCols;
+      indices.push_back(0);
+      indices.push_back(left + firstRingBaseIndex);
+      indices.push_back(right + firstRingBaseIndex);
+    }
+
+    //Calculate indices for the rows
+    for(int i = 0; i < numRows - 2; ++i)
+    {
+      const int topRowBaseIndex = firstRingBaseIndex + numCols * (i+0);
+      const int bottomRowBaseIndex = firstRingBaseIndex + numCols * (i+1);
+
+      for(int j = 0; j < numCols; ++j)
+      {
+        const int left = j;
+        const int right = (j + 1) % numCols;
+        indices.push_back(left + topRowBaseIndex);
+        indices.push_back(left + bottomRowBaseIndex);
+        indices.push_back(right + topRowBaseIndex);
+
+        indices.push_back(right + topRowBaseIndex);
+        indices.push_back(left + bottomRowBaseIndex);
+        indices.push_back(right + bottomRowBaseIndex);
+      }
+    }
+
+    //Calculate indices for bottom pole
+    for(int i = 0; i < numCols; ++i)
+    {
+      const int left = i;
+      const int right = (i + 1) % numCols;
+      indices.push_back(1);
+      indices.push_back(left + lastRingBaseIndex);
+      indices.push_back(right + lastRingBaseIndex);
+    }
+
+    Mesh *pMesh = new Mesh();
+    pMesh->m_iNumTris = indices.size() / 3;
+    pMesh->m_iNumIndices = indices.size();
+    pMesh->m_iStride = 8 * sizeof(GLfloat);
+    pMesh->m_iOffPos = 0 * sizeof(GLfloat);
+    pMesh->m_iOffUV = 3 * sizeof(GLfloat);
+    pMesh->m_iOffNormal = 5 * sizeof(GLfloat);
+
+    glGenVertexArrays(1, &pMesh->m_vaoConfig);
+    glGenBuffers(1, &pMesh->m_vboVertices);
+    glGenBuffers(1, &pMesh->m_vboIndices);
+
+    glBindVertexArray(pMesh->m_vaoConfig);
+
+    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(GLfloat), &verts[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->m_vboIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
