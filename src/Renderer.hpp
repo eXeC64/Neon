@@ -6,7 +6,7 @@
 #include <glm/vec3.hpp>
 #include "OpenGL.hpp"
 
-namespace he
+namespace ne
 {
   class Mesh;
   class Material;

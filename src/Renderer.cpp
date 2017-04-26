@@ -30,7 +30,7 @@ namespace
   }
 }
 
-namespace he
+namespace ne
 {
 
   Renderer::Renderer() :

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
   std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
 
-  he::Renderer* pRenderer = new he::Renderer();
+  ne::Renderer* pRenderer = new ne::Renderer();
 
   if(!pRenderer->Init(width,height))
   {
@@ -106,15 +106,18 @@ int main(int argc, char **argv)
 
   pRenderer->SetGlobalIllumination(glm::vec3(0.2));
 
-  he::Loader loader;
+  ne::Loader loader;
 
-  /* he::Model *pModel = loader.LoadModel("meshes/nanosuit.obj"); */
-  /* he::Model *pModel = loader.LoadModel("meshes/sibenik.obj"); */
-  he::Model *pModel = loader.LoadModel("meshes/sponza.obj");
-  he::Mesh *pCube = loader.GenerateCube();
-  he::Texture *pDif = loader.LoadTexture("images/bricks_dif.png", he::TextureFormat::Color);
-  he::Texture *pNorm = loader.LoadTexture("images/bricks_norm.png", he::TextureFormat::Normal);
-  he::Material matStone(pDif, pNorm);
+  /* ne::Model *pModel = loader.LoadModel("meshes/nanosuit.obj"); */
+  /* ne::Model *pModel = loader.LoadModel("meshes/sibenik.obj"); */
+  ne::Model *pModel = loader.LoadModel("meshes/sponza.obj");
+  /* ne::Model *pModel = loader.LoadModel("meshes/shipment.dae"); */
+  /* ne::Model *pModel = loader.LoadModel("meshes/teapot.dae"); */
+
+  ne::Mesh *pCube = loader.GenerateCube();
+  ne::Texture *pDif = loader.LoadTexture("images/bricks_dif.png", ne::TextureFormat::Color);
+  ne::Texture *pNorm = loader.LoadTexture("images/bricks_norm.png", ne::TextureFormat::Normal);
+  ne::Material matStone(pDif, pNorm);
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;

@@ -1,7 +1,7 @@
-Helium
+Neon
 ======
 
-Helium is a toy 3D rendering engine that I'm working on.
+Neon is a toy 3D rendering engine that I'm working on.
 
 Plan:
 

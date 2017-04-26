@@ -1,7 +1,7 @@
 #include "Mesh.hpp"
 #include "OpenGL.hpp"
 
-namespace he
+namespace ne
 {
 
   Mesh::Mesh() :

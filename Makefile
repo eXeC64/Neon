@@ -6,7 +6,7 @@ LDFLAGS = -lGL -lpng `sdl2-config --libs` -lassimp
 SRCS = main.cpp Renderer.cpp Model.cpp Mesh.cpp Loader.cpp Texture.cpp
 OBJS = $(addprefix build/, $(SRCS:.cpp=.o))
 
-TARGET = helium
+TARGET = neon
 
 $(TARGET): $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)

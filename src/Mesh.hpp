@@ -4,7 +4,7 @@
 #include "OpenGL.hpp"
 #include <stdint.h>
 
-namespace he
+namespace ne
 {
   class Mesh
   {

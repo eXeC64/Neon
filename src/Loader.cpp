@@ -12,7 +12,7 @@
 #include <png.h>
 #include <vector>
 
-namespace he
+namespace ne
 {
 
   Loader::Loader()

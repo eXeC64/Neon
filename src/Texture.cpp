@@ -1,6 +1,6 @@
 #include "Texture.hpp"
 
-namespace he
+namespace ne
 {
   Texture::Texture() : m_glTexture(0), m_width(0), m_height(0) {};
 

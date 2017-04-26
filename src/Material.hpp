@@ -1,6 +1,6 @@
 #pragma once
 
-namespace he
+namespace ne
 {
   class Texture;
   class Material

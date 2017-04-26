@@ -7,7 +7,7 @@ class aiMesh;
 class aiNode;
 class aiScene;
 
-namespace he
+namespace ne
 {
   class Model;
   class Mesh;

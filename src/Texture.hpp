@@ -2,7 +2,7 @@
 
 #include "OpenGL.hpp"
 
-namespace he
+namespace ne
 {
   class Texture
   {

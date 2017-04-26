@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <vector>
 
-namespace he
+namespace ne
 {
   class Mesh;
   class Material;
