@@ -17,7 +17,13 @@ layout (location = 2) out vec2 outPBRMaps;
 void main()
 {
   outLambert = texture(sampLambert, inUV).rgb;
-  outNormal = (texture(sampNormal, inUV).xyz * 2.0 - 1.0) * inNormalMat;
+
+  //Fix the range of the normal from [0,1] to [-1,-1] for calculations
+  vec3 rangeCorrectedNormal = texture(sampNormal, inUV).xyz * 2.0 - 1.0;
+  // Textures are flipped, so normals need to be too
+  vec3 flippedNormal = vec3(-1, -1, 1) * rangeCorrectedNormal;
+  //Transform the normal by the normal of the polygon its attached to
+  outNormal = flippedNormal * inNormalMat;
   outPBRMaps.r = texture(sampMetallic, inUV).r;
   outPBRMaps.g = texture(sampRoughness, inUV).r;
 }
