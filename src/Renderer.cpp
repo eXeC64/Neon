@@ -478,7 +478,7 @@ namespace ne
     glEnable(GL_CULL_FACE);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
     glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
@@ -489,6 +489,7 @@ namespace ne
     glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
+    glDepthFunc(GL_ALWAYS);
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
@@ -497,6 +498,7 @@ namespace ne
     glDisable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glDepthFunc(GL_LESS);
     glDisable(GL_BLEND);
   }
 
