@@ -51,7 +51,7 @@ void main()
   float attenuation = 1.0 / (lightDist * lightDist);
   float light = 1.0 * lightPower * attenuation;
 
-  outColor = vec3(0.5);
+  outColor = vec3(0.0);
   if(depth < 1.0)
   {
     outColor = gammaCorrect(2.2, lightColor * light * lambert);
