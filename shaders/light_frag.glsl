@@ -37,6 +37,12 @@ vec3 calcWorldPos(vec2 screenPos)
  return sPos.xyz / sPos.w;
 }
 
+float calcAttenuation(vec3 worldPos, vec3 lightPos)
+{
+  float d = distance(lightPos, worldPos);
+  return 1.0 / (d * d);
+}
+
 void main()
 {
   vec2 screenPos = gl_FragCoord.xy / screenSize;
@@ -46,15 +52,14 @@ void main()
   float depth = texture(sampDepth, screenPos).x;
 
   vec3 lightDir = normalize(lightPos - worldPos);
-  float lightPower = clamp(dot(lightDir, worldNormal), 0.0, 1.0);
-  float lightDist = distance(lightPos, worldPos);
-  float attenuation = 1.0 / (lightDist * lightDist);
-  float light = 1.0 * lightPower * attenuation;
+  float cosTheta = max(dot(worldNormal, lightDir), 0.0);
+  float attenuation = calcAttenuation(worldPos, lightPos);
+  float radiance = lightColor * cosTheta * attenuation;
 
   outColor = vec3(0.0);
   if(depth < 1.0)
   {
-    outColor = gammaCorrect(2.2, lightColor * light * lambert);
+    outColor = gammaCorrect(2.2, radiance * lambert);
   }
   gl_FragDepth = depth;
 }
