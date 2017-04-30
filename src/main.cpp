@@ -4,6 +4,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <math.h>
+#include <vector>
 
 #include "OpenGL.hpp"
 #include "Renderer.hpp"
@@ -64,6 +65,14 @@ void APIENTRY glDebugOutput(GLenum source,
   } std::cout << std::endl;
   std::cout << std::endl;
 }
+
+struct Light
+{
+  bool enabled;
+  bool debug;
+  glm::vec3 pos;
+  glm::vec3 color;
+};
 
 int main(int argc, char **argv)
 {
@@ -155,6 +164,9 @@ int main(int argc, char **argv)
 
     static bool debugMenu = false;
     static bool positionOverlay = false;
+    static bool lightsMenu = false;
+
+    static std::vector<Light> lights;
 
     glm::vec3 lightPos(9 * glm::sin(2*lightTime), 5.5, 5.5 * glm::cos(2*lightTime));
 
@@ -162,12 +174,17 @@ int main(int argc, char **argv)
     {
       if(ImGui::BeginMenu("Tools"))
       {
-        ImGui::MenuItem("Lighting", NULL, debugMenu);
+        ImGui::MenuItem("Debug", NULL, debugMenu);
         if(ImGui::IsItemClicked())
           debugMenu = !debugMenu;
+
         ImGui::MenuItem("Position Overlay", NULL, positionOverlay);
         if(ImGui::IsItemClicked())
           positionOverlay = !positionOverlay;
+
+        ImGui::MenuItem("Lights", NULL, lightsMenu);
+        if(ImGui::IsItemClicked())
+          lightsMenu = !lightsMenu;
 
         ImGui::EndMenu();
       }
@@ -178,8 +195,6 @@ int main(int argc, char **argv)
     {
       ImGui::Begin("Lighting", &debugMenu, ImGuiWindowFlags_AlwaysAutoResize);
 
-      ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
-      ImGui::Separator();
       /* ImGui::PushID("camera"); */
       ImGui::Checkbox("Camera Light", &cameraLight);
       ImGui::ColorEdit3("Color##camera", &cameraLightCol.x);
@@ -209,6 +224,36 @@ int main(int argc, char **argv)
       ImGui::End();
     }
 
+    if(lightsMenu)
+    {
+      ImGui::Begin("Lights", &lightsMenu, ImGuiWindowFlags_AlwaysAutoResize);
+
+      ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
+      ImGui::Separator();
+      ImGui::Button("Add Light");
+      if(ImGui::IsItemClicked())
+      {
+        lights.push_back(Light{true, true, glm::vec3{0, 2, 0}, glm::vec3{1}});
+      }
+
+      for(size_t i = 0; i < lights.size(); ++i)
+      {
+        Light& light = lights[i];
+        ImGui::Separator();
+        ImGui::PushID(&light);
+        ImGui::Checkbox("Enabled", &light.enabled);
+        ImGui::Checkbox("Debug", &light.debug);
+        ImGui::DragFloat3("Position", &light.pos.x, 0.01);
+        ImGui::ColorEdit3("Color", &light.color.x);
+        ImGui::Button("Delete");
+        if(ImGui::IsItemClicked())
+          lights.erase(lights.begin() + i);
+        ImGui::PopID();
+      }
+
+      ImGui::End();
+    }
+
     if(cameraLight)
       pRenderer->AddLight(cameraPos, cameraLightCol);
 
@@ -221,6 +266,20 @@ int main(int argc, char **argv)
       glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
       glm::mat4 tran = glm::translate(glm::mat4(1.0), lightPos);
         pRenderer->AddDebugSphere(tran * scale, glm::vec3(1.0));
+    }
+
+    for(auto& light : lights)
+    {
+      if(light.enabled)
+      {
+        pRenderer->AddLight(light.pos, light.color);
+        if(light.debug)
+        {
+          glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.2));
+          glm::mat4 tran = glm::translate(glm::mat4(1.0), light.pos);
+          pRenderer->AddDebugSphere(tran * scale, glm::vec3(1.0));
+        }
+      }
     }
 
     pRenderer->SetGlobalIllumination(glm::vec3(globalIllum));
