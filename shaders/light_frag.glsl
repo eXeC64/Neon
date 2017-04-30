@@ -54,7 +54,7 @@ void main()
   vec3 lightDir = normalize(lightPos - worldPos);
   float cosTheta = max(dot(worldNormal, lightDir), 0.0);
   float attenuation = calcAttenuation(worldPos, lightPos);
-  float radiance = lightColor * cosTheta * attenuation;
+  vec3 radiance = lightColor * cosTheta * attenuation;
 
   outColor = vec3(0.0);
   if(depth < 1.0)
