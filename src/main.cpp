@@ -255,11 +255,11 @@ int main(int argc, char **argv)
     }
 
     if(cameraLight)
-      pRenderer->AddLight(cameraPos, cameraLightCol);
+      pRenderer->AddPointLight(cameraPos, cameraLightCol);
 
 
     if(floatingLight)
-      pRenderer->AddLight(lightPos, floatingLightCol);
+      pRenderer->AddPointLight(lightPos, floatingLightCol);
 
     if(floatingLightSphere)
     {
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
     {
       if(light.enabled)
       {
-        pRenderer->AddLight(light.pos, light.color);
+        pRenderer->AddPointLight(light.pos, light.color);
         if(light.debug)
         {
           glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.2));

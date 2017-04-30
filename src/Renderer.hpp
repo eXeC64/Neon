@@ -21,9 +21,9 @@ namespace ne
     glm::mat4 pos;
   };
 
-  struct LightInstance
+  struct PointLight
   {
-    LightInstance(glm::vec3 pos, glm::vec3 color)
+    PointLight(glm::vec3 pos, glm::vec3 color)
       : pos(pos), color(color) {};
     glm::vec3 pos;
     glm::vec3 color;
@@ -53,7 +53,8 @@ namespace ne
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
-    void AddLight(glm::vec3 pos, glm::vec3 color);
+    void AddPointLight(glm::vec3 pos, glm::vec3 color);
+    void AddDirectionalLight(glm::vec3 direction, glm::vec3 color);
 
     //Add debug output
     void AddDebugCube(glm::mat4 position, glm::vec3 color);
@@ -69,7 +70,7 @@ namespace ne
     void SetupLightPass();
     void SetupDebugPass();
     void DrawMeshInstance(const MeshInstance &model);
-    void DrawLightInstance(const LightInstance &light);
+    void DrawLightInstance(const PointLight &light);
     void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
@@ -84,7 +85,8 @@ namespace ne
     float m_viewYaw;
     float m_viewTilt;
     GLuint m_shdMesh;
-    GLuint m_shdLight;
+    GLuint m_shdPointLight;
+    GLuint m_shdDirectionalLight;
     GLuint m_shdGlobalIllum;
     GLuint m_shdDebug;
     GLuint m_texLambert;
@@ -100,7 +102,7 @@ namespace ne
     Texture *m_pDefaultMetallic;
     Texture *m_pDefaultRoughness;
     std::vector<MeshInstance> m_models;
-    std::vector<LightInstance> m_lights;
+    std::vector<PointLight> m_lights;
     std::vector<DebugInstance> m_debugCubes;
     std::vector<DebugInstance> m_debugSpheres;
     glm::vec3 m_globalIllumColor;

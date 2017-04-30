@@ -41,7 +41,7 @@ namespace ne
     m_viewYaw(0),
     m_viewTilt(0),
     m_shdMesh(0),
-    m_shdLight(0),
+    m_shdPointLight(0),
     m_shdGlobalIllum(0),
     m_shdDebug(0),
     m_texLambert(0),
@@ -62,8 +62,8 @@ namespace ne
   {
     if(m_shdMesh)
       glDeleteProgram(m_shdMesh);
-    if(m_shdLight)
-      glDeleteProgram(m_shdLight);
+    if(m_shdPointLight)
+      glDeleteProgram(m_shdPointLight);
     if(m_shdGlobalIllum)
       glDeleteProgram(m_shdGlobalIllum);
     if(m_shdDebug)
@@ -145,8 +145,8 @@ namespace ne
     if(!m_shdMesh)
       return false;
 
-    m_shdLight = LoadShader("shaders/light_vert.glsl", "shaders/light_frag.glsl");
-    if(!m_shdLight)
+    m_shdPointLight = LoadShader("shaders/light_vert.glsl", "shaders/light_frag.glsl");
+    if(!m_shdPointLight)
       return false;
 
     m_shdGlobalIllum = LoadShader("shaders/globalillum_vert.glsl", "shaders/globalillum_frag.glsl");
@@ -320,9 +320,9 @@ namespace ne
     glBindTexture(GL_TEXTURE_2D, 0);
   }
 
-  void Renderer::DrawLightInstance(const LightInstance &light)
+  void Renderer::DrawLightInstance(const PointLight &light)
   {
-    glUseProgram(m_shdLight);
+    glUseProgram(m_shdPointLight);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_texLambert);
@@ -336,16 +336,16 @@ namespace ne
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_texDepth);
 
-    glUniformMatrix4fv(glGetUniformLocation(m_shdLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
-    glUniform1f(glGetUniformLocation(m_shdLight, "time"), (float)m_curTime);
-    glUniform3f(glGetUniformLocation(m_shdLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
-    glUniform2f(glGetUniformLocation(m_shdLight, "screenSize"), (float)m_width, (float)m_height);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampLambert"), 0);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampNormal"), 1);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampPBRMaps"), 2);
-    glUniform1i(glGetUniformLocation(m_shdLight, "sampDepth"), 3);
-    glUniform3f(glGetUniformLocation(m_shdLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
-    glUniform3f(glGetUniformLocation(m_shdLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdPointLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUniform1f(glGetUniformLocation(m_shdPointLight, "time"), (float)m_curTime);
+    glUniform3f(glGetUniformLocation(m_shdPointLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
+    glUniform2f(glGetUniformLocation(m_shdPointLight, "screenSize"), (float)m_width, (float)m_height);
+    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampLambert"), 0);
+    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampPBRMaps"), 2);
+    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampDepth"), 3);
+    glUniform3f(glGetUniformLocation(m_shdPointLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
+    glUniform3f(glGetUniformLocation(m_shdPointLight, "lightColor"), light.color.x, light.color.y, light.color.z);
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
     glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
@@ -368,9 +368,9 @@ namespace ne
     glBindVertexArray(0);
   }
 
-  void Renderer::AddLight(glm::vec3 pos, glm::vec3 color)
+  void Renderer::AddPointLight(glm::vec3 pos, glm::vec3 color)
   {
-    m_lights.push_back(LightInstance(pos, color));
+    m_lights.push_back(PointLight(pos, color));
   }
 
   void Renderer::AddDebugCube(glm::mat4 position, glm::vec3 color)
