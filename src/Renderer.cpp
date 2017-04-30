@@ -42,6 +42,7 @@ namespace ne
     m_viewTilt(0),
     m_shdMesh(0),
     m_shdPointLight(0),
+    m_shdDirectionalLight(0),
     m_shdGlobalIllum(0),
     m_shdDebug(0),
     m_texLambert(0),
@@ -64,6 +65,8 @@ namespace ne
       glDeleteProgram(m_shdMesh);
     if(m_shdPointLight)
       glDeleteProgram(m_shdPointLight);
+    if(m_shdDirectionalLight)
+      glDeleteProgram(m_shdDirectionalLight);
     if(m_shdGlobalIllum)
       glDeleteProgram(m_shdGlobalIllum);
     if(m_shdDebug)
@@ -145,8 +148,12 @@ namespace ne
     if(!m_shdMesh)
       return false;
 
-    m_shdPointLight = LoadShader("shaders/light_vert.glsl", "shaders/light_frag.glsl");
+    m_shdPointLight = LoadShader("shaders/light_vert.glsl", "shaders/pointlight_frag.glsl");
     if(!m_shdPointLight)
+      return false;
+
+   m_shdDirectionalLight = LoadShader("shaders/light_vert.glsl", "shaders/dirlight_frag.glsl");
+    if(!m_shdDirectionalLight)
       return false;
 
     m_shdGlobalIllum = LoadShader("shaders/globalillum_vert.glsl", "shaders/globalillum_frag.glsl");
@@ -194,7 +201,8 @@ namespace ne
     m_bIsMidFrame = true;
     //Clear out existing lights and geometry
     m_models.clear();
-    m_lights.clear();
+    m_pointLights.clear();
+    m_directionalLights.clear();
     m_debugCubes.clear();
     m_debugSpheres.clear();
   }
@@ -217,8 +225,10 @@ namespace ne
     ApplyGlobalIllumination();
 
     //Apply all our lights
-    for (auto& light : m_lights)
-      DrawLightInstance(light);
+    for (auto& pointLight : m_pointLights)
+      DrawLightInstance(pointLight);
+    for (auto& dirLight : m_directionalLights)
+      DrawLightInstance(dirLight);
 
     //TODO in future: final pass for transparent/translucent objects
 
@@ -337,7 +347,6 @@ namespace ne
     glBindTexture(GL_TEXTURE_2D, m_texDepth);
 
     glUniformMatrix4fv(glGetUniformLocation(m_shdPointLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
-    glUniform1f(glGetUniformLocation(m_shdPointLight, "time"), (float)m_curTime);
     glUniform3f(glGetUniformLocation(m_shdPointLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
     glUniform2f(glGetUniformLocation(m_shdPointLight, "screenSize"), (float)m_width, (float)m_height);
     glUniform1i(glGetUniformLocation(m_shdPointLight, "sampLambert"), 0);
@@ -346,6 +355,35 @@ namespace ne
     glUniform1i(glGetUniformLocation(m_shdPointLight, "sampDepth"), 3);
     glUniform3f(glGetUniformLocation(m_shdPointLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
     glUniform3f(glGetUniformLocation(m_shdPointLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+
+    glBindVertexArray(m_pPlane->m_vaoConfig);
+    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    glBindVertexArray(0);
+  }
+
+  void Renderer::DrawLightInstance(const DirectionalLight &light)
+  {
+    glUseProgram(m_shdDirectionalLight);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texLambert);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texNormal);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
+    glUniform2f(glGetUniformLocation(m_shdDirectionalLight, "screenSize"), (float)m_width, (float)m_height);
+    glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampLambert"), 0);
+    glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampPBRMaps"), 2);
+    glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampDepth"), 3);
+    glUniform3f(glGetUniformLocation(m_shdDirectionalLight, "lightDir"), light.dir.x, light.dir.y, light.dir.z);
+    glUniform3f(glGetUniformLocation(m_shdDirectionalLight, "lightColor"), light.color.x, light.color.y, light.color.z);
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
     glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
@@ -370,7 +408,12 @@ namespace ne
 
   void Renderer::AddPointLight(glm::vec3 pos, glm::vec3 color)
   {
-    m_lights.push_back(PointLight(pos, color));
+    m_pointLights.push_back(PointLight(pos, color));
+  }
+
+  void Renderer::AddDirectionalLight(glm::vec3 dir, glm::vec3 color)
+  {
+    m_directionalLights.push_back(DirectionalLight(dir, color));
   }
 
   void Renderer::AddDebugCube(glm::mat4 position, glm::vec3 color)
