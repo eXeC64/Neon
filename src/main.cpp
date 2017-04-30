@@ -165,6 +165,10 @@ int main(int argc, char **argv)
     static bool debugMenu = false;
     static bool positionOverlay = false;
     static bool lightsMenu = true;
+    static bool sun = false;
+    static float sunStrength = 0.5;
+    static glm::vec3 sunDir(1,2,1);
+    static glm::vec3 sunCol(1,1,0.5);
 
     static std::vector<Light> lights;
 
@@ -230,6 +234,11 @@ int main(int argc, char **argv)
 
       ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
       ImGui::Separator();
+      ImGui::Checkbox("Sun", &sun);
+      ImGui::SliderFloat("Sun Strength", &sunStrength, 0.0, 1.0);
+      ImGui::DragFloat3("Sun Direction", &sunDir.x, 0.01);
+      ImGui::ColorEdit3("Sun Color", &sunCol.x);
+      ImGui::Separator();
       ImGui::Button("Add Light");
       if(ImGui::IsItemClicked())
       {
@@ -257,17 +266,8 @@ int main(int argc, char **argv)
     if(cameraLight)
       pRenderer->AddPointLight(cameraPos, cameraLightCol);
 
-    static bool sun = false;
-    static glm::vec3 sunDir(0,-1,0);
-    static glm::vec3 sunCol(1,1,0);
-
-
-    ImGui::Checkbox("Sun", &sun);
-    ImGui::DragFloat3("Sun Direction", &sunDir.x, 0.01);
-    ImGui::ColorEdit3("Sun Color", &sunCol.x);
-
     if(sun)
-      pRenderer->AddDirectionalLight(sunDir, sunCol);
+      pRenderer->AddDirectionalLight(sunDir, sunCol * sunStrength);
 
     if(floatingLight)
       pRenderer->AddPointLight(lightPos, floatingLightCol);
