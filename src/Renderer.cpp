@@ -406,14 +406,14 @@ namespace ne
     glBindVertexArray(0);
   }
 
-  void Renderer::AddPointLight(glm::vec3 pos, glm::vec3 color)
+  void Renderer::AddPointLight(const PointLight& light)
   {
-    m_pointLights.push_back(PointLight(pos, color));
+    m_pointLights.push_back(light);
   }
 
-  void Renderer::AddDirectionalLight(glm::vec3 dir, glm::vec3 color)
+  void Renderer::AddDirectionalLight(const DirectionalLight& light)
   {
-    m_directionalLights.push_back(DirectionalLight(dir, color));
+    m_directionalLights.push_back(light);
   }
 
   void Renderer::AddDebugCube(glm::mat4 position, glm::vec3 color)

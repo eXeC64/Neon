@@ -264,13 +264,13 @@ int main(int argc, char **argv)
     }
 
     if(cameraLight)
-      pRenderer->AddPointLight(cameraPos, cameraLightCol);
+      pRenderer->AddPointLight(ne::PointLight(cameraPos, cameraLightCol));
 
     if(sun)
-      pRenderer->AddDirectionalLight(sunDir, sunCol * sunStrength);
+      pRenderer->AddDirectionalLight(ne::DirectionalLight(sunDir, sunCol * sunStrength));
 
     if(floatingLight)
-      pRenderer->AddPointLight(lightPos, floatingLightCol);
+      pRenderer->AddPointLight(ne::PointLight(lightPos, floatingLightCol));
 
     if(floatingLightSphere)
     {
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
     {
       if(light.enabled)
       {
-        pRenderer->AddPointLight(light.pos, light.color);
+        pRenderer->AddPointLight(ne::PointLight(light.pos, light.color));
         if(light.debug)
         {
           glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.2));

@@ -61,8 +61,8 @@ namespace ne
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
-    void AddPointLight(glm::vec3 pos, glm::vec3 color);
-    void AddDirectionalLight(glm::vec3 dir, glm::vec3 color);
+    void AddPointLight(const PointLight& light);
+    void AddDirectionalLight(const DirectionalLight& light);
 
     //Add debug output
     void AddDebugCube(glm::mat4 position, glm::vec3 color);
