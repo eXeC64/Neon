@@ -12,6 +12,7 @@
 #include "Mesh.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
+#include "ImguiWrapper.hpp"
 
 void APIENTRY glDebugOutput(GLenum source,
                             GLenum type,
@@ -84,7 +85,6 @@ int main(int argc, char **argv)
     std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
     return 1;
   }
-  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   SDL_GLContext GLcontext = SDL_GL_CreateContext(pWindow);
 
@@ -106,18 +106,12 @@ int main(int argc, char **argv)
 
   pRenderer->SetGlobalIllumination(glm::vec3(0.2));
 
+  ne::ImguiWrapper gui;
+
   ne::Loader loader;
 
   /* ne::Model *pModel = loader.LoadModel("meshes/nanosuit.obj"); */
-  /* ne::Model *pModel = loader.LoadModel("meshes/sibenik.obj"); */
   ne::Model *pModel = loader.LoadModel("meshes/sponza.obj");
-  /* ne::Model *pModel = loader.LoadModel("meshes/shipment.dae"); */
-  /* ne::Model *pModel = loader.LoadModel("meshes/teapot.dae"); */
-
-  ne::Mesh *pCube = loader.GenerateCube();
-  ne::Texture *pDif = loader.LoadTexture("images/bricks_dif.png", ne::TextureFormat::Color);
-  ne::Texture *pNorm = loader.LoadTexture("images/bricks_norm.png", ne::TextureFormat::Normal);
-  ne::Material matStone(pDif, pNorm);
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
@@ -142,31 +136,97 @@ int main(int argc, char **argv)
     pRenderer->AddTime(dt);
 
     pRenderer->BeginFrame();
+    gui.NewFrame(pWindow);
+
     for(size_t i = 0; i < pModel->m_meshes.size(); ++i)
     {
       pRenderer->AddMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
     }
-    pRenderer->AddMesh(pCube, &matStone, glm::translate(glm::mat4(1.0), glm::vec3(0, 3, 0)));
 
 
-    /* pRenderer->AddLight( */
-    /*     cameraPos, */
-    /*     glm::vec3(1.0, 1.0, 1.0) */
-    /* ); */
+    static float globalIllum = 0.2;
 
-    /* glm::vec3 lightPos(9 * glm::sin(2*lightTime), -10.0, 5.5 * glm::cos(2*lightTime)); */
+    static bool cameraLight = true;
+    static glm::vec3 cameraLightCol(1.0);
+
+    static bool floatingLight = true;
+    static glm::vec3 floatingLightCol(1.0);
+    static bool floatingLightSphere = true;
+
+    static bool debugMenu = false;
+    static bool positionOverlay = false;
+
     glm::vec3 lightPos(9 * glm::sin(2*lightTime), 5.5, 5.5 * glm::cos(2*lightTime));
-    pRenderer->AddLight(lightPos, glm::vec3(1.0, 1.0, 1.0));
 
+    if(ImGui::BeginMainMenuBar())
     {
-      glm::mat4 sScale = glm::scale(glm::mat4(1.0), glm::vec3(5));
-      glm::mat4 cScale = glm::scale(glm::mat4(1.0), glm::vec3(0.5));
-      glm::mat4 tran = glm::translate(glm::mat4(1.0), lightPos);
-      pRenderer->AddDebugSphere(tran * sScale, glm::vec3(1.0, 1.0, 1.0));
-      pRenderer->AddDebugCube(tran * cScale, glm::vec3(1.0, 0.0, 0.0));
+      if(ImGui::BeginMenu("Tools"))
+      {
+        ImGui::MenuItem("Lighting", NULL, debugMenu);
+        if(ImGui::IsItemClicked())
+          debugMenu = !debugMenu;
+        ImGui::MenuItem("Position Overlay", NULL, positionOverlay);
+        if(ImGui::IsItemClicked())
+          positionOverlay = !positionOverlay;
+
+        ImGui::EndMenu();
+      }
+      ImGui::EndMainMenuBar();
     }
 
+    if(debugMenu)
+    {
+      ImGui::Begin("Lighting", &debugMenu, ImGuiWindowFlags_AlwaysAutoResize);
+
+      ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
+      ImGui::Separator();
+      /* ImGui::PushID("camera"); */
+      ImGui::Checkbox("Camera Light", &cameraLight);
+      ImGui::ColorEdit3("Color##camera", &cameraLightCol.x);
+      /* ImGui::PopID(); */
+      ImGui::Separator();
+      /* ImGui::PushID("floating"); */
+      ImGui::Checkbox("Floating Light", &floatingLight);
+      ImGui::ColorEdit3("Color##floating", &floatingLightCol.x);
+      ImGui::Checkbox("Draw Outline", &floatingLightSphere);
+      /* ImGui::PopID(); */
+      ImGui::End();
+    }
+
+    if(positionOverlay)
+    {
+      ImGui::SetNextWindowPos(ImVec2(10,40));
+      ImGui::Begin("Position Overlay",
+                       NULL,
+                       ImVec2(0,0),
+                       0.5f,
+                       ImGuiWindowFlags_NoTitleBar
+                         |ImGuiWindowFlags_NoResize
+                         |ImGuiWindowFlags_NoMove
+                         |ImGuiWindowFlags_NoSavedSettings);
+      ImGui::Text("Camera Position: %8.3f %8.3f %8.3f", cameraPos.x, cameraPos.y, cameraPos.z);
+      ImGui::Text(" Light Position: %8.3f %8.3f %8.3f", lightPos.x, lightPos.y, lightPos.z);
+      ImGui::End();
+    }
+
+    if(cameraLight)
+      pRenderer->AddLight(cameraPos, cameraLightCol);
+
+
+    if(floatingLight)
+      pRenderer->AddLight(lightPos, floatingLightCol);
+
+    if(floatingLightSphere)
+    {
+      glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.1));
+      glm::mat4 tran = glm::translate(glm::mat4(1.0), lightPos);
+        pRenderer->AddDebugSphere(tran * scale, glm::vec3(1.0));
+    }
+
+    pRenderer->SetGlobalIllumination(glm::vec3(globalIllum));
+
     pRenderer->EndFrame();
+    gui.Render();
 
     SDL_GL_SwapWindow(pWindow);
     SDL_Delay(10);
@@ -175,46 +235,70 @@ int main(int argc, char **argv)
     SDL_Event e;
     while(SDL_PollEvent(&e))
     {
+      gui.HandleEvent(&e);
+
+      if(gui.UsingMouse() && (
+            e.type == SDL_MOUSEMOTION ||
+            e.type == SDL_MOUSEBUTTONDOWN ||
+            e.type == SDL_MOUSEBUTTONUP))
+          continue;
+
+      if(gui.UsingKeyboard() && (
+            e.type == SDL_KEYDOWN ||
+            e.type == SDL_KEYUP))
+          continue;
+
       switch(e.type)
       {
         case SDL_QUIT:
           quit = true;
           break;
+
         case SDL_MOUSEMOTION:
-          cameraYaw += 0.15 * dt * e.motion.xrel;
-          cameraTilt += 0.15 * dt * e.motion.yrel;
-          break;
-        case SDL_KEYDOWN:
-          if(e.key.keysym.sym == SDLK_p) {
-            std::cout << "cameraPos: " << cameraPos.x << "," << cameraPos.y << "," << cameraPos.z << std::endl;
+          if(SDL_GetMouseState(NULL,NULL) & SDL_BUTTON(SDL_BUTTON_LEFT))
+          {
+            cameraYaw += 0.30 * dt * e.motion.xrel;
+            cameraTilt += 0.30 * dt * e.motion.yrel;
           }
+          break;
+
+        case SDL_MOUSEBUTTONDOWN:
+          if(e.button.button == SDL_BUTTON_LEFT)
+            SDL_SetRelativeMouseMode(SDL_TRUE);
+          break;
+
+        case SDL_MOUSEBUTTONUP:
+          if(e.button.button == SDL_BUTTON_LEFT)
+            SDL_SetRelativeMouseMode(SDL_FALSE);
           break;
       }
     }
 
-    const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
-    float moveSpeed = keyboard[SDL_SCANCODE_LSHIFT] ? 1 : 5;
-    if(keyboard[SDL_SCANCODE_W])
-      cameraPos += glm::vec3(moveSpeed * dt) * cameraNorm;
-    if(keyboard[SDL_SCANCODE_S])
-      cameraPos -= glm::vec3(moveSpeed * dt) * cameraNorm;
-    if(keyboard[SDL_SCANCODE_A])
-      cameraPos -= glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
-    if(keyboard[SDL_SCANCODE_D])
-      cameraPos += glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
-    if(keyboard[SDL_SCANCODE_SPACE])
-      cameraPos += glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
-    if(keyboard[SDL_SCANCODE_LCTRL])
-      cameraPos -= glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
-    if(keyboard[SDL_SCANCODE_T])
+    if(!gui.UsingKeyboard())
     {
-      if(keyboard[SDL_SCANCODE_LSHIFT])
-        lightTime -= dt;
-      else
-        lightTime += dt;
+      const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
+      float moveSpeed = keyboard[SDL_SCANCODE_LSHIFT] ? 1 : 5;
+      if(keyboard[SDL_SCANCODE_W])
+        cameraPos += glm::vec3(moveSpeed * dt) * cameraNorm;
+      if(keyboard[SDL_SCANCODE_S])
+        cameraPos -= glm::vec3(moveSpeed * dt) * cameraNorm;
+      if(keyboard[SDL_SCANCODE_A])
+        cameraPos -= glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
+      if(keyboard[SDL_SCANCODE_D])
+        cameraPos += glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
+      if(keyboard[SDL_SCANCODE_SPACE])
+        cameraPos += glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
+      if(keyboard[SDL_SCANCODE_LCTRL])
+        cameraPos -= glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
+
+      if(keyboard[SDL_SCANCODE_T])
+      {
+        if(keyboard[SDL_SCANCODE_LSHIFT])
+          lightTime -= dt;
+        else
+          lightTime += dt;
+      }
     }
-
-
   }
 
   delete pRenderer;
