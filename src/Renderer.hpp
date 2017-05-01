@@ -101,6 +101,7 @@ namespace ne
     bool m_bIsMidFrame;
     int m_width;
     int m_height;
+    int m_shadowMapSize;
     double m_curTime;
     glm::mat4 m_matProjection;
     glm::vec3 m_viewPos;
@@ -117,6 +118,8 @@ namespace ne
     GLuint m_texPBRMaps;
     GLuint m_texDepth;
     GLuint m_FBO;
+    GLuint m_shadowFBO;
+    GLuint m_texShadow;
     Mesh* m_pPlane;
     Mesh* m_pCube;
     Mesh* m_pSphere;

@@ -37,6 +37,7 @@ namespace ne
     m_bIsInit(false),
     m_bIsMidFrame(false),
     m_width(0), m_height(0),
+    m_shadowMapSize(1024),
     m_curTime(0),
     m_viewYaw(0),
     m_viewTilt(0),
@@ -51,6 +52,8 @@ namespace ne
     m_texPBRMaps(0),
     m_texDepth(0),
     m_FBO(0),
+    m_shadowFBO(0),
+    m_texShadow(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
     m_pSphere(nullptr),
@@ -84,6 +87,10 @@ namespace ne
       glDeleteTextures(1, &m_texDepth);
     if(m_FBO)
       glDeleteFramebuffers(1, &m_FBO);
+    if(m_shadowFBO)
+      glDeleteFramebuffers(1, &m_shadowFBO);
+    if(m_texShadow)
+      glDeleteTextures(1, &m_texShadow);
     if(m_pPlane)
       delete m_pPlane;
     if(m_pCube)
@@ -135,6 +142,33 @@ namespace ne
       m_FBO = 0;
       return false;
     }
+
+    //Return to default framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //Setup frame buffer for shadows
+    glGenTextures(1, &m_texShadow);
+    glBindTexture(GL_TEXTURE_2D, m_texShadow);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0, GL_DEPTH_COMPONENT,
+        m_shadowMapSize,
+        m_shadowMapSize,
+        0,
+        GL_DEPTH_COMPONENT,
+        GL_FLOAT,
+        NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glGenFramebuffers(1, &m_shadowFBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadowFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texShadow, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
 
     //Return to default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
