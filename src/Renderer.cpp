@@ -47,6 +47,7 @@ namespace ne
     m_shdSpotLight(0),
     m_shdGlobalIllum(0),
     m_shdDebug(0),
+    m_shdShadows(0),
     m_texLambert(0),
     m_texNormal(0),
     m_texPBRMaps(0),
@@ -77,6 +78,8 @@ namespace ne
       glDeleteProgram(m_shdGlobalIllum);
     if(m_shdDebug)
       glDeleteProgram(m_shdDebug);
+    if(m_shdShadows)
+      glDeleteProgram(m_shdShadows);
     if(m_texLambert)
       glDeleteTextures(1, &m_texLambert);
     if(m_texNormal)
@@ -160,8 +163,10 @@ namespace ne
         NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    GLfloat borderColor[] = { 0.0, 0.0, 0.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     glGenFramebuffers(1, &m_shadowFBO);
 
@@ -193,7 +198,7 @@ namespace ne
     if(!m_shdDirectionalLight)
       return false;
 
-    m_shdSpotLight = LoadShader("shaders/light_vert.glsl", "shaders/spotlight_frag.glsl");
+    m_shdSpotLight = LoadShader("shaders/spotlight_vert.glsl", "shaders/spotlight_frag.glsl");
     if(!m_shdSpotLight)
       return false;
 
@@ -203,6 +208,10 @@ namespace ne
 
     m_shdDebug = LoadShader("shaders/debug_vert.glsl", "shaders/debug_frag.glsl");
     if(!m_shdDebug)
+      return false;
+
+    m_shdShadows = LoadShader("shaders/shadows_vert.glsl", "shaders/shadows_frag.glsl");
+    if(!m_shdShadows)
       return false;
 
     m_pPlane = Loader::GeneratePlane();
@@ -255,10 +264,7 @@ namespace ne
     SetupGeometryPass();
 
     //Draw the geometry into the g buffers
-    for (auto& model : m_models)
-    {
-      DrawMeshInstance(model);
-    }
+    DrawStaticMeshes();
 
     //Prepare for lighting pass
     SetupLightPass();
@@ -312,58 +318,56 @@ namespace ne
     m_models.push_back(MeshInstance(pMesh, pMat, matPosition));
   }
 
-  void Renderer::DrawMeshInstance(const MeshInstance &model)
+  void Renderer::DrawStaticMeshes()
   {
     glUseProgram(m_shdMesh);
-    glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matPos"), 1, GL_FALSE, &model.pos[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampLambert"), 0);
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampMetallic"), 2);
+    glUniform1i(glGetUniformLocation(m_shdMesh, "sampRoughness"), 3);
 
+    GLint matPosLoc = glGetUniformLocation(m_shdMesh, "matPos");
+    for(auto& model : m_models)
     {
+      glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+
       Texture *pLambert = model.mat->m_pLambert;
       if(!pLambert)
         pLambert = m_pDefaultLambert;
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, pLambert->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shdMesh, "sampLambert"), 0);
-    }
 
-    {
       Texture *pNormal = model.mat->m_pNormal;
       if(!pNormal)
         pNormal = m_pDefaultNormal;
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
-    }
 
-    {
       Texture *pMetallic = model.mat->m_pMetallic;
       if(!pMetallic)
         pMetallic = m_pDefaultMetallic;
-      glActiveTexture(GL_TEXTURE2);
-      glBindTexture(GL_TEXTURE_2D, pMetallic->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shdMesh, "sampMetallic"), 2);
-    }
 
-    {
       Texture *pRoughness = model.mat->m_pRoughness;
       if(!pRoughness)
         pRoughness = m_pDefaultRoughness;
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, pLambert->m_glTexture);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, pMetallic->m_glTexture);
       glActiveTexture(GL_TEXTURE3);
       glBindTexture(GL_TEXTURE_2D, pRoughness->m_glTexture);
-      glUniform1i(glGetUniformLocation(m_shdMesh, "sampRoughness"), 3);
-    }
 
-    glBindVertexArray(model.mesh->m_vaoConfig);
+      glBindVertexArray(model.mesh->m_vaoConfig);
 
-    if(model.mesh->m_iNumIndices > 0)
-    {
-      glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
-    }
-    else
-    {
-      glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+      if(model.mesh->m_iNumIndices > 0)
+      {
+        glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+      }
+      else
+      {
+        glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+      }
     }
 
     glBindVertexArray(0);
@@ -445,44 +449,105 @@ namespace ne
 
   void Renderer::DrawSpotLights()
   {
-    glUseProgram(m_shdSpotLight);
+    const GLint matViewLoc     = glGetUniformLocation(m_shdSpotLight, "matView");
+    const GLint matLightLoc    = glGetUniformLocation(m_shdSpotLight, "matLight");
+    const GLint screenSizeLoc  = glGetUniformLocation(m_shdSpotLight, "screenSize");
+    const GLint sampLambertLoc = glGetUniformLocation(m_shdSpotLight, "sampLambert");
+    const GLint sampNormalLoc  = glGetUniformLocation(m_shdSpotLight, "sampNormal");
+    const GLint sampPBRMapsLoc = glGetUniformLocation(m_shdSpotLight, "sampPBRMaps");
+    const GLint sampDepthLoc   = glGetUniformLocation(m_shdSpotLight, "sampDepth");
+    const GLint sampShadowLoc  = glGetUniformLocation(m_shdSpotLight, "sampShadow");
+    const GLint lightPosLoc    = glGetUniformLocation(m_shdSpotLight, "lightPos");
+    const GLint lightDirLoc    = glGetUniformLocation(m_shdSpotLight, "lightDir");
+    const GLint innerAngleLoc  = glGetUniformLocation(m_shdSpotLight, "innerAngle");
+    const GLint outerAngleLoc  = glGetUniformLocation(m_shdSpotLight, "outerAngle");
+    const GLint lightColorLoc  = glGetUniformLocation(m_shdSpotLight, "lightColor");
+    const GLint nearPlaneLoc   = glGetUniformLocation(m_shdSpotLight, "nearPlane");
+    const GLint farPlaneLoc    = glGetUniformLocation(m_shdSpotLight, "farPlane");
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_texLambert);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_texNormal);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
-
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, m_texDepth);
-
-    glUniformMatrix4fv(glGetUniformLocation(m_shdSpotLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
-    glUniform2f(glGetUniformLocation(m_shdSpotLight, "screenSize"), (float)m_width, (float)m_height);
-    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampLambert"), 0);
-    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampNormal"), 1);
-    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampPBRMaps"), 2);
-    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampDepth"), 3);
-
-    const GLint lightPosLoc   = glGetUniformLocation(m_shdSpotLight, "lightPos");
-    const GLint lightDirLoc   = glGetUniformLocation(m_shdSpotLight, "lightDir");
-    const GLint innerAngleLoc = glGetUniformLocation(m_shdSpotLight, "innerAngle");
-    const GLint outerAngleLoc = glGetUniformLocation(m_shdSpotLight, "outerAngle");
-    const GLint lightColorLoc = glGetUniformLocation(m_shdSpotLight, "lightColor");
-
-    glBindVertexArray(m_pPlane->m_vaoConfig);
     for(auto& light : m_spotLights)
     {
+      //First render shadow map
+      const double nearPlane = 0.1f, farPlane = 30.0f;
+      const double width = 2.0f;
+      const glm::mat4 lightProj = glm::perspective(1.0, 1.0, nearPlane, farPlane);
+      const glm::mat4 lightView = glm::lookAt(light.pos, light.pos + light.dir, glm::vec3(0,1,0));
+      const glm::mat4 lightSpace = lightProj * lightView;
+
+      DrawShadowMap(lightSpace);
+
+      // Now render lighting shader
+      glUseProgram(m_shdSpotLight);
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, m_texLambert);
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, m_texNormal);
+
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
+
+      glActiveTexture(GL_TEXTURE3);
+      glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
+      glActiveTexture(GL_TEXTURE4);
+      glBindTexture(GL_TEXTURE_2D, m_texShadow);
+
+      glUniformMatrix4fv(matViewLoc, 1, GL_FALSE, &m_matProjection[0][0]);
+      glUniformMatrix4fv(matLightLoc, 1, GL_FALSE, &lightSpace[0][0]);
+      glUniform2f(screenSizeLoc, (float)m_width, (float)m_height);
+      glUniform1i(sampLambertLoc, 0);
+      glUniform1i(sampNormalLoc,  1);
+      glUniform1i(sampPBRMapsLoc, 2);
+      glUniform1i(sampDepthLoc,   3);
+      glUniform1i(sampShadowLoc,  4);
       glUniform3f(lightPosLoc, light.pos.x, light.pos.y, light.pos.z);
       glUniform3f(lightDirLoc, light.dir.x, light.dir.y, light.dir.z);
       glUniform1f(innerAngleLoc, glm::cos(light.innerAngle));
       glUniform1f(outerAngleLoc, glm::cos(light.outerAngle));
       glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glUniform1f(nearPlaneLoc, nearPlane);
+      glUniform1f(farPlaneLoc, farPlane);
+
+      glDepthFunc(GL_ALWAYS);
+      glBindVertexArray(m_pPlane->m_vaoConfig);
       glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+      glBindVertexArray(0);
     }
-    glBindVertexArray(0);
+  }
+
+  void Renderer::DrawShadowMap(glm::mat4 lightProj)
+  {
+    glViewport(0, 0, m_shadowMapSize, m_shadowMapSize);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadowFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glDepthFunc(GL_LESS);
+    glUseProgram(m_shdShadows);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdShadows, "matLight"), 1, GL_FALSE, &lightProj[0][0]);
+    const GLint matPosLoc = glGetUniformLocation(m_shdShadows, "matPos");
+
+    for(auto& model : m_models)
+    {
+      glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+
+      glBindVertexArray(model.mesh->m_vaoConfig);
+
+      if(model.mesh->m_iNumIndices > 0)
+      {
+        glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+      }
+      else
+      {
+        glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+      }
+
+      glBindVertexArray(0);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, m_width, m_height);
   }
 
   void Renderer::DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance)
@@ -534,7 +599,7 @@ namespace ne
   GLuint Renderer::LoadShader(const std::string &vsPath, const std::string &fsPath)
   {
     //Read the sources
-    std::vector<char> vSrc(2048);
+    std::vector<char> vSrc(4096);
     std::ifstream vsIs(vsPath, std::ios::in);
     if(!vsIs.is_open())
     {
@@ -544,7 +609,7 @@ namespace ne
     vsIs.read(&vSrc[0], vSrc.size());
     vsIs.close();
 
-    std::vector<char> fSrc(2048);
+    std::vector<char> fSrc(4096);
     std::ifstream fsIs(fsPath, std::ios::in);
     if(!fsIs.is_open())
     {

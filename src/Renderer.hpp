@@ -89,10 +89,11 @@ namespace ne
     void SetupGeometryPass();
     void SetupLightPass();
     void SetupDebugPass();
-    void DrawMeshInstance(const MeshInstance &model);
+    void DrawStaticMeshes();
     void DrawPointLights();
     void DrawDirectionalLights();
     void DrawSpotLights();
+    void DrawShadowMap(glm::mat4 matView);
     void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
@@ -113,6 +114,7 @@ namespace ne
     GLuint m_shdSpotLight;
     GLuint m_shdGlobalIllum;
     GLuint m_shdDebug;
+    GLuint m_shdShadows;
     GLuint m_texLambert;
     GLuint m_texNormal;
     GLuint m_texPBRMaps;
