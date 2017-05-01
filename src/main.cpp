@@ -272,6 +272,12 @@ int main(int argc, char **argv)
     if(floatingLight)
       pRenderer->AddPointLight(ne::PointLight(lightPos, floatingLightCol));
 
+    pRenderer->AddSpotLight(
+          ne::SpotLight(cameraPos, cameraNorm,
+          glm::radians(10.0f),
+          glm::radians(25.0f),
+          glm::vec3(1)));
+
     if(floatingLightSphere)
     {
       glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.1));

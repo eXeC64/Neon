@@ -43,6 +43,7 @@ namespace ne
     m_shdMesh(0),
     m_shdPointLight(0),
     m_shdDirectionalLight(0),
+    m_shdSpotLight(0),
     m_shdGlobalIllum(0),
     m_shdDebug(0),
     m_texLambert(0),
@@ -67,6 +68,8 @@ namespace ne
       glDeleteProgram(m_shdPointLight);
     if(m_shdDirectionalLight)
       glDeleteProgram(m_shdDirectionalLight);
+    if(m_shdSpotLight)
+      glDeleteProgram(m_shdSpotLight);
     if(m_shdGlobalIllum)
       glDeleteProgram(m_shdGlobalIllum);
     if(m_shdDebug)
@@ -152,8 +155,12 @@ namespace ne
     if(!m_shdPointLight)
       return false;
 
-   m_shdDirectionalLight = LoadShader("shaders/light_vert.glsl", "shaders/dirlight_frag.glsl");
+    m_shdDirectionalLight = LoadShader("shaders/light_vert.glsl", "shaders/dirlight_frag.glsl");
     if(!m_shdDirectionalLight)
+      return false;
+
+    m_shdSpotLight = LoadShader("shaders/light_vert.glsl", "shaders/spotlight_frag.glsl");
+    if(!m_shdSpotLight)
       return false;
 
     m_shdGlobalIllum = LoadShader("shaders/globalillum_vert.glsl", "shaders/globalillum_frag.glsl");
@@ -203,6 +210,7 @@ namespace ne
     m_models.clear();
     m_pointLights.clear();
     m_directionalLights.clear();
+    m_spotLights.clear();
     m_debugCubes.clear();
     m_debugSpheres.clear();
   }
@@ -229,6 +237,8 @@ namespace ne
       DrawLightInstance(pointLight);
     for (auto& dirLight : m_directionalLights)
       DrawLightInstance(dirLight);
+    for (auto& spotLight : m_spotLights)
+      DrawLightInstance(spotLight);
 
     //TODO in future: final pass for transparent/translucent objects
 
@@ -390,6 +400,39 @@ namespace ne
     glBindVertexArray(0);
   }
 
+  void Renderer::DrawLightInstance(const SpotLight &light)
+  {
+    glUseProgram(m_shdSpotLight);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texLambert);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texNormal);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
+    glUniformMatrix4fv(glGetUniformLocation(m_shdSpotLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUniform2f(glGetUniformLocation(m_shdSpotLight, "screenSize"), (float)m_width, (float)m_height);
+    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampLambert"), 0);
+    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampPBRMaps"), 2);
+    glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampDepth"), 3);
+    glUniform3f(glGetUniformLocation(m_shdSpotLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
+    glUniform3f(glGetUniformLocation(m_shdSpotLight, "lightDir"), light.dir.x, light.dir.y, light.dir.z);
+    glUniform1f(glGetUniformLocation(m_shdSpotLight, "innerAngle"), glm::cos(light.innerAngle));
+    glUniform1f(glGetUniformLocation(m_shdSpotLight, "outerAngle"), glm::cos(light.outerAngle));
+    glUniform3f(glGetUniformLocation(m_shdSpotLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+
+    glBindVertexArray(m_pPlane->m_vaoConfig);
+    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    glBindVertexArray(0);
+  }
+
   void Renderer::DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance)
   {
     glUseProgram(m_shdDebug);
@@ -414,6 +457,11 @@ namespace ne
   void Renderer::AddDirectionalLight(const DirectionalLight& light)
   {
     m_directionalLights.push_back(light);
+  }
+
+  void Renderer::AddSpotLight(const SpotLight& light)
+  {
+    m_spotLights.push_back(light);
   }
 
   void Renderer::AddDebugCube(glm::mat4 position, glm::vec3 color)

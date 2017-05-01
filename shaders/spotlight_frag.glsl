@@ -10,6 +10,9 @@ uniform sampler2D sampPBRMaps;
 uniform sampler2D sampDepth;
 
 uniform vec3 lightPos;
+uniform vec3 lightDir;
+uniform float innerAngle;
+uniform float outerAngle;
 uniform vec3 lightColor;
 uniform vec2 screenSize;
 uniform mat4 matView;
@@ -36,21 +39,25 @@ float calcAttenuation(vec3 worldPos, vec3 lightPos)
 
 void main()
 {
-  vec2 screenPos = gl_FragCoord.xy / screenSize;
-  vec3 lambert = texture(sampLambert, screenPos).rgb;
-  vec3 worldNormal = texture(sampNormal, screenPos).xyz;
-  vec3 worldPos = calcWorldPos(screenPos);
-  float depth = texture(sampDepth, screenPos).x;
-
-  vec3 lightDir = normalize(lightPos - worldPos);
-  float cosTheta = max(dot(worldNormal, lightDir), 0.0);
-  float attenuation = calcAttenuation(worldPos, lightPos);
-  vec3 radiance = lightColor * cosTheta * attenuation;
-
   outColor = vec3(0.0);
+  vec2 screenPos = gl_FragCoord.xy / screenSize;
+  float depth = texture(sampDepth, screenPos).x;
+  gl_FragDepth = depth;
+
   if(depth < 1.0)
   {
+    vec3 lambert = texture(sampLambert, screenPos).rgb;
+    vec3 worldNormal = texture(sampNormal, screenPos).xyz;
+    vec3 worldPos = calcWorldPos(screenPos);
+
+    vec3 fragToLight = normalize(lightPos - worldPos);
+    float dirTheta = dot(lightDir, normalize(-fragToLight));
+
+    float attenuation = calcAttenuation(worldPos, lightPos);
+    float penumbra = smoothstep(outerAngle, innerAngle, dirTheta);
+
+    float cosTheta = max(dot(worldNormal, fragToLight), 0.0);
+    vec3 radiance = penumbra * lightColor * cosTheta * attenuation;
     outColor = gammaCorrect(2.2, radiance * lambert);
   }
-  gl_FragDepth = depth;
 }

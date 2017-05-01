@@ -37,6 +37,17 @@ namespace ne
     glm::vec3 color;
   };
 
+  struct SpotLight
+  {
+    SpotLight(glm::vec3 pos, glm::vec3 dir, float innerAngle, float outerAngle, glm::vec3 color)
+      : pos(pos), dir(dir), innerAngle(innerAngle), outerAngle(outerAngle), color(color) {};
+    glm::vec3 pos;
+    glm::vec3 dir;
+    float innerAngle;
+    float outerAngle;
+    glm::vec3 color;
+  };
+
   struct DebugInstance
   {
     DebugInstance(glm::mat4 pos, glm::vec3 color)
@@ -63,6 +74,7 @@ namespace ne
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
     void AddPointLight(const PointLight& light);
     void AddDirectionalLight(const DirectionalLight& light);
+    void AddSpotLight(const SpotLight& light);
 
     //Add debug output
     void AddDebugCube(glm::mat4 position, glm::vec3 color);
@@ -80,6 +92,7 @@ namespace ne
     void DrawMeshInstance(const MeshInstance &model);
     void DrawLightInstance(const PointLight &light);
     void DrawLightInstance(const DirectionalLight &light);
+    void DrawLightInstance(const SpotLight &light);
     void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
@@ -96,6 +109,7 @@ namespace ne
     GLuint m_shdMesh;
     GLuint m_shdPointLight;
     GLuint m_shdDirectionalLight;
+    GLuint m_shdSpotLight;
     GLuint m_shdGlobalIllum;
     GLuint m_shdDebug;
     GLuint m_texLambert;
@@ -113,6 +127,7 @@ namespace ne
     std::vector<MeshInstance> m_models;
     std::vector<PointLight> m_pointLights;
     std::vector<DirectionalLight> m_directionalLights;
+    std::vector<SpotLight> m_spotLights;
     std::vector<DebugInstance> m_debugCubes;
     std::vector<DebugInstance> m_debugSpheres;
     glm::vec3 m_globalIllumColor;
