@@ -41,6 +41,7 @@ namespace ne
     m_curTime(0),
     m_viewYaw(0),
     m_viewTilt(0),
+    m_gamma(2.2),
     m_shdMesh(0),
     m_shdPointLight(0),
     m_shdDirectionalLight(0),
@@ -48,12 +49,15 @@ namespace ne
     m_shdGlobalIllum(0),
     m_shdDebug(0),
     m_shdShadows(0),
+    m_shdCompositor(0),
     m_texLambert(0),
     m_texNormal(0),
     m_texPBRMaps(0),
     m_texDepth(0),
+    m_texComposite(0),
     m_FBO(0),
     m_shadowFBO(0),
+    m_compositeFBO(0),
     m_texShadow(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
@@ -80,6 +84,8 @@ namespace ne
       glDeleteProgram(m_shdDebug);
     if(m_shdShadows)
       glDeleteProgram(m_shdShadows);
+    if(m_shdCompositor)
+      glDeleteProgram(m_shdCompositor);
     if(m_texLambert)
       glDeleteTextures(1, &m_texLambert);
     if(m_texNormal)
@@ -88,10 +94,14 @@ namespace ne
       glDeleteTextures(1, &m_texPBRMaps);
     if(m_texDepth)
       glDeleteTextures(1, &m_texDepth);
+    if(m_texComposite)
+      glDeleteTextures(1, &m_texComposite);
     if(m_FBO)
       glDeleteFramebuffers(1, &m_FBO);
     if(m_shadowFBO)
       glDeleteFramebuffers(1, &m_shadowFBO);
+    if(m_compositeFBO)
+      glDeleteFramebuffers(1, &m_compositeFBO);
     if(m_texShadow)
       glDeleteTextures(1, &m_texShadow);
     if(m_pPlane)
@@ -132,19 +142,22 @@ namespace ne
     glDrawBuffers(sizeof drawBuffers / sizeof drawBuffers[0], drawBuffers);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-      glDeleteTextures(1, &m_texLambert);
-      glDeleteTextures(1, &m_texNormal);
-      glDeleteTextures(1, &m_texPBRMaps);
-      glDeleteTextures(1, &m_texDepth);
-      glDeleteFramebuffers(1, &m_FBO);
-      m_texLambert = 0;
-      m_texNormal = 0;
-      m_texPBRMaps = 0;
-      m_texDepth = 0;
-      m_FBO = 0;
       return false;
-    }
+
+
+    //Setup framebuffer for compositing
+    glGenFramebuffers(1, &m_compositeFBO);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_compositeFBO);
+
+    m_texComposite = GenerateBuffer(GL_RGB16F, GL_RGB, GL_COLOR_ATTACHMENT0, m_width, m_height);
+    GLenum compositeBuffers[] = {
+      GL_COLOR_ATTACHMENT0,
+    };
+    glDrawBuffers(sizeof compositeBuffers / sizeof compositeBuffers[0], compositeBuffers);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+      return false;
+
 
     //Return to default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -214,6 +227,10 @@ namespace ne
     if(!m_shdShadows)
       return false;
 
+    m_shdCompositor = LoadShader("shaders/compositor_vert.glsl", "shaders/compositor_frag.glsl");
+    if(!m_shdCompositor)
+      return false;
+
     m_pPlane = Loader::GeneratePlane();
     if(!m_pPlane)
       return false;
@@ -276,6 +293,8 @@ namespace ne
     DrawPointLights();
     DrawDirectionalLights();
     DrawSpotLights();
+
+    CompositeFrame();
 
     //TODO in future: final pass for transparent/translucent objects
 
@@ -693,7 +712,7 @@ namespace ne
 
   void Renderer::SetupLightPass()
   {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_compositeFBO);
     glClearColor(0.0,0.0,0.0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
@@ -710,9 +729,36 @@ namespace ne
     glDisable(GL_BLEND);
   }
 
+  void Renderer::CompositeFrame()
+  {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glClearColor(0.0,0.0,0.0,1);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(m_shdCompositor);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texComposite);
+
+    glUniform1i(glGetUniformLocation(m_shdCompositor, "sampBuffer"), 0);
+    glUniform1f(glGetUniformLocation(m_shdCompositor, "gamma"), m_gamma);
+    glUniform2f(glGetUniformLocation(m_shdCompositor, "screenSize"), (float)m_width, (float)m_height);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, m_pPlane->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, m_pPlane->m_iStride, (void*)m_pPlane->m_iOffPos);
+    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    glDisableVertexAttribArray(0);
+  }
+
   void Renderer::SetGlobalIllumination(glm::vec3 color)
   {
     m_globalIllumColor = color;
+  }
+
+  void Renderer::SetGamma(float gamma)
+  {
+    m_gamma = gamma;
   }
 
   void Renderer::ApplyGlobalIllumination()

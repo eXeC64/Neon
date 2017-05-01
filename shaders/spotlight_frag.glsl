@@ -21,13 +21,6 @@ uniform mat4 matLight;
 uniform float nearPlane;
 uniform float farPlane;
 
-//in vec4 inLightSpacePos;
-
-vec3 gammaCorrect(float gamma, vec3 color)
-{
-  return pow(color, vec3(1.0/gamma));
-}
-
 vec3 calcWorldPos(vec2 screenPos)
 {
  float z = texture(sampDepth, screenPos).x;
@@ -80,6 +73,6 @@ void main()
 
     float cosTheta = max(dot(worldNormal, fragToLight), 0.0);
     vec3 radiance = lightColor * cosTheta * attenuation * penumbra * shadow;
-    outColor = gammaCorrect(2.2, radiance * lambert);
+    outColor = radiance * lambert;
   }
 }

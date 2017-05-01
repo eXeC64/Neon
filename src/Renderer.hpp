@@ -69,6 +69,7 @@ namespace ne
 
     void SetViewPosition(glm::vec3 pos, float yaw, float tilt);
     void SetGlobalIllumination(glm::vec3 color);
+    void SetGamma(float gamma);
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
@@ -89,6 +90,7 @@ namespace ne
     void SetupGeometryPass();
     void SetupLightPass();
     void SetupDebugPass();
+    void CompositeFrame();
     void DrawStaticMeshes();
     void DrawPointLights();
     void DrawDirectionalLights();
@@ -108,6 +110,7 @@ namespace ne
     glm::vec3 m_viewPos;
     float m_viewYaw;
     float m_viewTilt;
+    float m_gamma;
     GLuint m_shdMesh;
     GLuint m_shdPointLight;
     GLuint m_shdDirectionalLight;
@@ -115,12 +118,15 @@ namespace ne
     GLuint m_shdGlobalIllum;
     GLuint m_shdDebug;
     GLuint m_shdShadows;
+    GLuint m_shdCompositor;
     GLuint m_texLambert;
     GLuint m_texNormal;
     GLuint m_texPBRMaps;
     GLuint m_texDepth;
+    GLuint m_texComposite;
     GLuint m_FBO;
     GLuint m_shadowFBO;
+    GLuint m_compositeFBO;
     GLuint m_texShadow;
     Mesh* m_pPlane;
     Mesh* m_pCube;

@@ -153,7 +153,8 @@ int main(int argc, char **argv)
     }
 
 
-    static float globalIllum = 0.2;
+    static float globalIllum = 0.005;
+    static float gamma = 2.2;
 
     static bool cameraLight = false;
     static glm::vec3 cameraLightCol(1.0);
@@ -164,7 +165,7 @@ int main(int argc, char **argv)
 
     static bool debugMenu = false;
     static bool positionOverlay = false;
-    static bool lightsMenu = false;
+    static bool lightsMenu = true;
     static bool sun = false;
     static float sunStrength = 0.5;
     static glm::vec3 sunDir(1,2,1);
@@ -233,6 +234,7 @@ int main(int argc, char **argv)
       ImGui::Begin("Lights", &lightsMenu, ImGuiWindowFlags_AlwaysAutoResize);
 
       ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
+      ImGui::SliderFloat("Gamma", &gamma, 1.0, 3.0);
       ImGui::Separator();
       ImGui::Checkbox("Sun", &sun);
       ImGui::SliderFloat("Sun Strength", &sunStrength, 0.0, 1.0);
@@ -278,16 +280,16 @@ int main(int argc, char **argv)
     /*       glm::radians(25.0f), */
     /*       glm::vec3(1))); */
 
-    static glm::vec3 spotPos(0.0, 0.0, 0.0);
-    static glm::vec3 spotDir(1.0, 0.0, 0.0);
-    static glm::vec3 spotColor(1.0, 0.0, 0.0);
-    ImGui::DragFloat3("Position", &spotPos.x, 0.01);
-    ImGui::DragFloat3("Direction", &spotDir.x, 0.1);
-    ImGui::ColorEdit3("Color", &spotColor.x);
-    pRenderer->AddSpotLight(ne::SpotLight(spotPos, glm::normalize(spotDir),
-            glm::radians(20.0f),
-            glm::radians(25.0f),
-            spotColor));
+    /* static glm::vec3 spotPos(0.0, 0.0, 0.0); */
+    /* static glm::vec3 spotDir(1.0, 0.0, 0.0); */
+    /* static glm::vec3 spotColor(1.0, 0.0, 0.0); */
+    /* ImGui::DragFloat3("Position", &spotPos.x, 0.01); */
+    /* ImGui::DragFloat3("Direction", &spotDir.x, 0.1); */
+    /* ImGui::ColorEdit3("Color", &spotColor.x); */
+    /* pRenderer->AddSpotLight(ne::SpotLight(spotPos, glm::normalize(spotDir), */
+    /*         glm::radians(20.0f), */
+    /*         glm::radians(25.0f), */
+    /*         spotColor)); */
 
     /* pRenderer->AddSpotLight( */
     /*       ne::SpotLight( */
@@ -328,6 +330,7 @@ int main(int argc, char **argv)
     }
 
     pRenderer->SetGlobalIllumination(glm::vec3(globalIllum));
+    pRenderer->SetGamma(gamma);
 
     pRenderer->EndFrame();
     gui.Render();

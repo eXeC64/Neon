@@ -14,11 +14,6 @@ uniform vec3 lightColor;
 uniform vec2 screenSize;
 uniform mat4 matView;
 
-vec3 gammaCorrect(float gamma, vec3 color)
-{
-  return pow(color, vec3(1.0/gamma));
-}
-
 vec3 calcWorldPos(vec2 screenPos)
 {
  float z = texture(sampDepth, screenPos).x;
@@ -50,7 +45,7 @@ void main()
   outColor = vec3(0.0);
   if(depth < 1.0)
   {
-    outColor = gammaCorrect(2.2, radiance * lambert);
+    outColor = radiance * lambert;
   }
   gl_FragDepth = depth;
 }
