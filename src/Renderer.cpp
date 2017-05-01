@@ -267,12 +267,9 @@ namespace ne
     ApplyGlobalIllumination();
 
     //Apply all our lights
-    for (auto& pointLight : m_pointLights)
-      DrawLightInstance(pointLight);
-    for (auto& dirLight : m_directionalLights)
-      DrawLightInstance(dirLight);
-    for (auto& spotLight : m_spotLights)
-      DrawLightInstance(spotLight);
+    DrawPointLights();
+    DrawDirectionalLights();
+    DrawSpotLights();
 
     //TODO in future: final pass for transparent/translucent objects
 
@@ -374,7 +371,7 @@ namespace ne
     glBindTexture(GL_TEXTURE_2D, 0);
   }
 
-  void Renderer::DrawLightInstance(const PointLight &light)
+  void Renderer::DrawPointLights()
   {
     glUseProgram(m_shdPointLight);
 
@@ -397,15 +394,21 @@ namespace ne
     glUniform1i(glGetUniformLocation(m_shdPointLight, "sampNormal"), 1);
     glUniform1i(glGetUniformLocation(m_shdPointLight, "sampPBRMaps"), 2);
     glUniform1i(glGetUniformLocation(m_shdPointLight, "sampDepth"), 3);
-    glUniform3f(glGetUniformLocation(m_shdPointLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
-    glUniform3f(glGetUniformLocation(m_shdPointLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+
+    const GLint lightPosLoc = glGetUniformLocation(m_shdPointLight, "lightPos");
+    const GLint lightColorLoc = glGetUniformLocation(m_shdPointLight, "lightColor");
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
-    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    for(auto& light : m_pointLights)
+    {
+      glUniform3f(lightPosLoc, light.pos.x, light.pos.y, light.pos.z);
+      glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    }
     glBindVertexArray(0);
   }
 
-  void Renderer::DrawLightInstance(const DirectionalLight &light)
+  void Renderer::DrawDirectionalLights()
   {
     glUseProgram(m_shdDirectionalLight);
 
@@ -426,15 +429,21 @@ namespace ne
     glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampNormal"), 1);
     glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampPBRMaps"), 2);
     glUniform1i(glGetUniformLocation(m_shdDirectionalLight, "sampDepth"), 3);
-    glUniform3f(glGetUniformLocation(m_shdDirectionalLight, "lightDir"), light.dir.x, light.dir.y, light.dir.z);
-    glUniform3f(glGetUniformLocation(m_shdDirectionalLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+
+    const GLint lightDirLoc = glGetUniformLocation(m_shdDirectionalLight, "lightDir");
+    const GLint lightColorLoc = glGetUniformLocation(m_shdDirectionalLight, "lightColor");
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
-    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    for(auto& light : m_directionalLights)
+    {
+      glUniform3f(lightDirLoc, light.dir.x, light.dir.y, light.dir.z);
+      glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    }
     glBindVertexArray(0);
   }
 
-  void Renderer::DrawLightInstance(const SpotLight &light)
+  void Renderer::DrawSpotLights()
   {
     glUseProgram(m_shdSpotLight);
 
@@ -456,14 +465,23 @@ namespace ne
     glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampNormal"), 1);
     glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampPBRMaps"), 2);
     glUniform1i(glGetUniformLocation(m_shdSpotLight, "sampDepth"), 3);
-    glUniform3f(glGetUniformLocation(m_shdSpotLight, "lightPos"), light.pos.x, light.pos.y, light.pos.z);
-    glUniform3f(glGetUniformLocation(m_shdSpotLight, "lightDir"), light.dir.x, light.dir.y, light.dir.z);
-    glUniform1f(glGetUniformLocation(m_shdSpotLight, "innerAngle"), glm::cos(light.innerAngle));
-    glUniform1f(glGetUniformLocation(m_shdSpotLight, "outerAngle"), glm::cos(light.outerAngle));
-    glUniform3f(glGetUniformLocation(m_shdSpotLight, "lightColor"), light.color.x, light.color.y, light.color.z);
+
+    const GLint lightPosLoc   = glGetUniformLocation(m_shdSpotLight, "lightPos");
+    const GLint lightDirLoc   = glGetUniformLocation(m_shdSpotLight, "lightDir");
+    const GLint innerAngleLoc = glGetUniformLocation(m_shdSpotLight, "innerAngle");
+    const GLint outerAngleLoc = glGetUniformLocation(m_shdSpotLight, "outerAngle");
+    const GLint lightColorLoc = glGetUniformLocation(m_shdSpotLight, "lightColor");
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
-    glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    for(auto& light : m_spotLights)
+    {
+      glUniform3f(lightPosLoc, light.pos.x, light.pos.y, light.pos.z);
+      glUniform3f(lightDirLoc, light.dir.x, light.dir.y, light.dir.z);
+      glUniform1f(innerAngleLoc, glm::cos(light.innerAngle));
+      glUniform1f(outerAngleLoc, glm::cos(light.outerAngle));
+      glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+    }
     glBindVertexArray(0);
   }
 

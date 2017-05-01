@@ -90,9 +90,9 @@ namespace ne
     void SetupLightPass();
     void SetupDebugPass();
     void DrawMeshInstance(const MeshInstance &model);
-    void DrawLightInstance(const PointLight &light);
-    void DrawLightInstance(const DirectionalLight &light);
-    void DrawLightInstance(const SpotLight &light);
+    void DrawPointLights();
+    void DrawDirectionalLights();
+    void DrawSpotLights();
     void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
