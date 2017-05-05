@@ -494,6 +494,7 @@ namespace ne
       const glm::mat4 lightSpace = lightProj * lightView;
 
       DrawShadowMap(lightSpace);
+      glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
 
       // Now render lighting shader
       glUseProgram(m_shdSpotLight);
@@ -565,7 +566,6 @@ namespace ne
       glBindVertexArray(0);
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, m_width, m_height);
   }
 

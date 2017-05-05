@@ -48,7 +48,8 @@ float calcShadow(vec3 worldPos)
   vec3 projCoords = (lightSpacePos.xyz / lightSpacePos.w) * 0.5 + 0.5;
   float closestDepth = texture(sampShadow, projCoords.xy).r;
   float currentDepth = projCoords.z;
-  return closestDepth > currentDepth - 0.001 ? 1.0 : 0.0;
+  float bias = 0.0001;
+  return closestDepth > currentDepth - bias ? 1.0 : 0.0;
 }
 
 void main()
