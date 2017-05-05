@@ -488,8 +488,7 @@ namespace ne
     {
       //First render shadow map
       const double nearPlane = 0.1f, farPlane = 30.0f;
-      const double width = 2.0f;
-      const glm::mat4 lightProj = glm::perspective(1.0, 1.0, nearPlane, farPlane);
+      const glm::mat4 lightProj = glm::perspective(light.outerAngle * 2.0, 1.0, nearPlane, farPlane);
       const glm::mat4 lightView = glm::lookAt(light.pos, light.pos + light.dir, glm::vec3(0,1,0));
       const glm::mat4 lightSpace = lightProj * lightView;
 
