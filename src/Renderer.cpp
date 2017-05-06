@@ -1,6 +1,6 @@
 #include "Renderer.hpp"
 
-#include "Mesh.hpp"
+#include "StaticMesh.hpp"
 #include "Material.hpp"
 #include "Texture.hpp"
 #include "Loader.hpp"
@@ -375,12 +375,12 @@ namespace ne
     m_matProjection = proj * rot * tran;
   }
 
-  void Renderer::AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition)
+  void Renderer::AddStaticMesh(StaticMesh *pMesh, Material *pMat, glm::mat4 matPosition)
   {
     if(!pMesh || !pMat || !m_bIsMidFrame)
       return;
 
-    m_models.push_back(MeshInstance(pMesh, pMat, matPosition));
+    m_models.push_back(StaticMeshInstance(pMesh, pMat, matPosition));
   }
 
   void Renderer::DrawStaticMeshes()
@@ -692,7 +692,7 @@ namespace ne
     glViewport(0, 0, m_width, m_height);
   }
 
-  void Renderer::DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance)
+  void Renderer::DrawDebugMesh(const StaticMesh* mesh, const DebugInstance &instance)
   {
     glUseProgram(m_shdDebug);
     glUniformMatrix4fv(glGetUniformLocation(m_shdDebug, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);

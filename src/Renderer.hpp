@@ -8,15 +8,15 @@
 
 namespace ne
 {
-  class Mesh;
+  class StaticMesh;
   class Material;
   class Texture;
 
-  struct MeshInstance
+  struct StaticMeshInstance
   {
-    MeshInstance(Mesh* pMesh, Material* pMat, glm::mat4 position)
+    StaticMeshInstance(StaticMesh* pMesh, Material* pMat, glm::mat4 position)
       : mesh(pMesh), mat(pMat), pos(position) {};
-    Mesh* mesh;
+    StaticMesh* mesh;
     Material* mat;
     glm::mat4 pos;
   };
@@ -81,7 +81,7 @@ namespace ne
     void SetExposure(float exposure);
 
     //Add to current frame
-    void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
+    void AddStaticMesh(StaticMesh *pMesh, Material *pMat, glm::mat4 matPosition);
     void AddPointLight(const PointLight& light);
     void AddDirectionalLight(const DirectionalLight& light);
     void AddSpotLight(const SpotLight& light);
@@ -106,7 +106,7 @@ namespace ne
     void DrawSpotLights();
     void DrawSpotShadowMap(glm::mat4 matView);
     void DrawPointShadowMap(glm::vec3 position, double nearPlane, double farPlane);
-    void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
+    void DrawDebugMesh(const StaticMesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
 
@@ -142,14 +142,14 @@ namespace ne
     GLuint m_compositeFBO;
     GLuint m_texShadow;
     GLuint m_texShadowCube;
-    Mesh* m_pPlane;
-    Mesh* m_pCube;
-    Mesh* m_pSphere;
+    StaticMesh* m_pPlane;
+    StaticMesh* m_pCube;
+    StaticMesh* m_pSphere;
     Texture *m_pDefaultLambert;
     Texture *m_pDefaultNormal;
     Texture *m_pDefaultMetallic;
     Texture *m_pDefaultRoughness;
-    std::vector<MeshInstance> m_models;
+    std::vector<StaticMeshInstance> m_models;
     std::vector<PointLight> m_pointLights;
     std::vector<DirectionalLight> m_directionalLights;
     std::vector<SpotLight> m_spotLights;

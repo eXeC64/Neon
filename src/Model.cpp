@@ -1,5 +1,5 @@
 #include "Model.hpp"
-#include "Mesh.hpp"
+#include "StaticMesh.hpp"
 #include "OpenGL.hpp"
 
 namespace ne
@@ -11,7 +11,7 @@ namespace ne
 
   Model::~Model()
   {
-    for(Mesh* mesh : m_meshes)
+    for(StaticMesh* mesh : m_meshes)
       delete mesh;
   }
 

@@ -7,7 +7,7 @@
 
 namespace ne
 {
-  class Mesh;
+  class StaticMesh;
   class Material;
 
   class Model
@@ -21,7 +21,7 @@ namespace ne
   private:
     Model();
   public:
-    std::vector<Mesh*> m_meshes;
+    std::vector<StaticMesh*> m_meshes;
     std::vector<Material*> m_materials;
   };
 }

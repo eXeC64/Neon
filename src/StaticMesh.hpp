@@ -6,16 +6,16 @@
 
 namespace ne
 {
-  class Mesh
+  class StaticMesh
   {
     friend class Renderer;
     friend class Loader;
 
   public:
-    ~Mesh();
+    ~StaticMesh();
 
   private:
-    Mesh();
+    StaticMesh();
     GLuint m_vaoConfig; //Configuration vao
     GLuint m_vboVertices; //VBO containing vertices
     GLuint m_vboIndices; //VBO containing indices

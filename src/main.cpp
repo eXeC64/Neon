@@ -10,7 +10,7 @@
 #include "Renderer.hpp"
 #include "Loader.hpp"
 #include "Model.hpp"
-#include "Mesh.hpp"
+#include "StaticMesh.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
 #include "ImguiWrapper.hpp"
@@ -69,7 +69,6 @@ void APIENTRY glDebugOutput(GLenum source,
 struct Light
 {
   bool enabled;
-  bool debug;
   glm::vec3 pos;
   glm::vec3 color;
   float bright;
@@ -130,6 +129,10 @@ int main(int argc, char **argv)
   double lastTime = SDL_GetTicks() / 1000.0;
   double lightTime = 0.0;
 
+  std::vector<Light> lights;
+  lights.push_back(Light{true, glm::vec3(-5,3,0), glm::vec3(1), 5.0f});
+  lights.push_back(Light{true, glm::vec3( 5,3,0), glm::vec3(1), 5.0f});
+
   bool quit = false;
   while(!quit)
   {
@@ -150,11 +153,11 @@ int main(int argc, char **argv)
 
     for(size_t i = 0; i < pModel->m_meshes.size(); ++i)
     {
-      pRenderer->AddMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
+      pRenderer->AddStaticMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
     }
 
 
-    static float globalIllum = 0.005;
+    static float globalIllum = 0.025;
     static float gamma = 2.2;
     static float exposure = 1.0;
 
@@ -168,13 +171,12 @@ int main(int argc, char **argv)
     static bool debugMenu = false;
     static bool positionOverlay = false;
     static bool fpsOverlay = false;
-    static bool lightsMenu = true;
+    static bool lightsMenu = false;
     static bool sun = false;
     static float sunStrength = 0.5;
     static glm::vec3 sunDir(1,2,1);
     static glm::vec3 sunCol(1,1,0.5);
 
-    static std::vector<Light> lights;
 
     glm::vec3 lightPos(9 * glm::sin(2*lightTime), 5.5, 5.5 * glm::cos(2*lightTime));
 
@@ -256,7 +258,7 @@ int main(int argc, char **argv)
     {
       ImGui::Begin("Lights", &lightsMenu, ImGuiWindowFlags_AlwaysAutoResize);
 
-      ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
+      ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 0.02);
       ImGui::SliderFloat("Gamma", &gamma, 1.0, 3.0);
       ImGui::SliderFloat("Exposure", &exposure, 0.01, 10.0);
       ImGui::Separator();
@@ -268,7 +270,7 @@ int main(int argc, char **argv)
       ImGui::Button("Add Light");
       if(ImGui::IsItemClicked())
       {
-        lights.push_back(Light{true, true, glm::vec3{0, 2, 0}, glm::vec3{1}, 1.0});
+        lights.push_back(Light{true, glm::vec3{0, 2, 0}, glm::vec3{1}, 1.0});
       }
 
       for(size_t i = 0; i < lights.size(); ++i)
@@ -277,7 +279,6 @@ int main(int argc, char **argv)
         ImGui::Separator();
         ImGui::PushID(&light);
         ImGui::Checkbox("Enabled", &light.enabled);
-        ImGui::Checkbox("Debug", &light.debug);
         ImGui::DragFloat3("Position", &light.pos.x, 0.01);
         ImGui::ColorEdit3("Color", &light.color.x);
         ImGui::DragFloat("Brightness", &light.bright, 0.01);
@@ -304,18 +305,6 @@ int main(int argc, char **argv)
     /*       glm::radians(10.0f), */
     /*       glm::radians(25.0f), */
     /*       glm::vec3(1))); */
-
-    static glm::vec3 spotPos(0.0, 0.0, 0.0);
-    static glm::vec3 spotDir(1.0, 0.0, 0.0);
-    static glm::vec3 spotColor(1.0, 1.0, 1.0);
-    ImGui::DragFloat3("Position", &spotPos.x, 0.01);
-    ImGui::DragFloat3("Direction", &spotDir.x, 0.1);
-    ImGui::ColorEdit3("Color", &spotColor.x);
-    /* pRenderer->AddSpotLight(ne::SpotLight(spotPos, glm::normalize(spotDir), */
-    /*         glm::radians(20.0f), */
-    /*         glm::radians(25.0f), */
-    /*         spotColor, */
-    /*         1.0f)); */
 
     /* pRenderer->AddSpotLight( */
     /*       ne::SpotLight( */
@@ -348,12 +337,9 @@ int main(int argc, char **argv)
       if(light.enabled)
       {
         pRenderer->AddPointLight(ne::PointLight(light.pos, light.color, light.bright));
-        if(light.debug)
-        {
-          glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.2));
-          glm::mat4 tran = glm::translate(glm::mat4(1.0), light.pos);
-          pRenderer->AddDebugSphere(tran * scale, glm::vec3(1.0));
-        }
+        glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.2));
+        glm::mat4 tran = glm::translate(glm::mat4(1.0), light.pos);
+        pRenderer->AddDebugSphere(tran * scale, glm::vec3(1.0));
       }
     }
 

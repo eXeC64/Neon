@@ -1,7 +1,7 @@
 #include "Loader.hpp"
 
 #include "Material.hpp"
-#include "Mesh.hpp"
+#include "StaticMesh.hpp"
 #include "Model.hpp"
 #include "Texture.hpp"
 
@@ -27,7 +27,7 @@ namespace ne
       delete it.second;
   }
 
-  Mesh* Loader::LoadMesh(const aiMesh* mesh)
+  StaticMesh* Loader::LoadStaticMesh(const aiMesh* mesh)
   {
     std::vector<GLfloat> data;
     for(GLuint i = 0; i < mesh->mNumVertices; ++i)
@@ -59,7 +59,7 @@ namespace ne
       }
     }
 
-    Mesh* pMesh = new Mesh();
+    StaticMesh* pMesh = new StaticMesh();
     pMesh->m_iNumTris = data.size() / 24; //(8 floats per vertex, 3 vertices per tri)
     pMesh->m_iNumIndices = indices.size();
     pMesh->m_iStride = 8 * sizeof(GLfloat);
@@ -96,7 +96,7 @@ namespace ne
     for(GLuint i = 0; i < node->mNumMeshes; ++i)
     {
       const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-      Mesh* heMesh = LoadMesh(mesh);
+      StaticMesh* heMesh = LoadStaticMesh(mesh);
       model->m_meshes.push_back(heMesh);
 
       const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -312,9 +312,9 @@ namespace ne
     return pTex;
   }
 
-  Mesh* Loader::GeneratePlane()
+  StaticMesh* Loader::GeneratePlane()
   {
-    Mesh *pMesh = new Mesh();
+    StaticMesh *pMesh = new StaticMesh();
     pMesh->m_iNumTris = 2;
     pMesh->m_iStride = 8 * sizeof(GLfloat);
     pMesh->m_iOffPos = 0 * sizeof(GLfloat);
@@ -350,9 +350,9 @@ namespace ne
     return pMesh;
   }
 
-  Mesh* Loader::GenerateCube()
+  StaticMesh* Loader::GenerateCube()
   {
-    Mesh *pMesh = new Mesh();
+    StaticMesh *pMesh = new StaticMesh();
 
     pMesh->m_iNumTris = 12;
     pMesh->m_iStride = 8 * sizeof(GLfloat);
@@ -424,7 +424,7 @@ namespace ne
     return pMesh;
   }
 
-  Mesh* Loader::GenerateSphere()
+  StaticMesh* Loader::GenerateSphere()
   {
     std::vector<GLfloat> verts;
     std::vector<GLuint> indices;
@@ -520,7 +520,7 @@ namespace ne
       indices.push_back(right + lastRingBaseIndex);
     }
 
-    Mesh *pMesh = new Mesh();
+    StaticMesh *pMesh = new StaticMesh();
     pMesh->m_iNumTris = indices.size() / 3;
     pMesh->m_iNumIndices = indices.size();
     pMesh->m_iStride = 8 * sizeof(GLfloat);

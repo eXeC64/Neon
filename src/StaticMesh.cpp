@@ -1,10 +1,10 @@
-#include "Mesh.hpp"
+#include "StaticMesh.hpp"
 #include "OpenGL.hpp"
 
 namespace ne
 {
 
-  Mesh::Mesh() :
+  StaticMesh::StaticMesh() :
     m_vaoConfig(0),
     m_vboVertices(0),
     m_vboIndices(0),
@@ -15,7 +15,7 @@ namespace ne
   {
   }
 
-  Mesh::~Mesh()
+  StaticMesh::~StaticMesh()
   {
     if(m_vboVertices)
       glDeleteBuffers(1, &m_vboVertices);
