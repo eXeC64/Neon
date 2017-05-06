@@ -49,6 +49,7 @@ namespace ne
     m_shdGlobalIllum(0),
     m_shdDebug(0),
     m_shdShadows(0),
+    m_shdCubeShadows(0),
     m_shdCompositor(0),
     m_texLambert(0),
     m_texNormal(0),
@@ -57,8 +58,10 @@ namespace ne
     m_texComposite(0),
     m_FBO(0),
     m_shadowFBO(0),
+    m_shadowCubeFBO(0),
     m_compositeFBO(0),
     m_texShadow(0),
+    m_texShadowCube(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
     m_pSphere(nullptr),
@@ -84,6 +87,8 @@ namespace ne
       glDeleteProgram(m_shdDebug);
     if(m_shdShadows)
       glDeleteProgram(m_shdShadows);
+    if(m_shdCubeShadows)
+      glDeleteProgram(m_shdCubeShadows);
     if(m_shdCompositor)
       glDeleteProgram(m_shdCompositor);
     if(m_texLambert)
@@ -100,10 +105,14 @@ namespace ne
       glDeleteFramebuffers(1, &m_FBO);
     if(m_shadowFBO)
       glDeleteFramebuffers(1, &m_shadowFBO);
+    if(m_shadowCubeFBO)
+      glDeleteFramebuffers(1, &m_shadowCubeFBO);
     if(m_compositeFBO)
       glDeleteFramebuffers(1, &m_compositeFBO);
     if(m_texShadow)
       glDeleteTextures(1, &m_texShadow);
+    if(m_texShadowCube)
+      glDeleteTextures(1, &m_texShadowCube);
     if(m_pPlane)
       delete m_pPlane;
     if(m_pCube)
@@ -191,6 +200,38 @@ namespace ne
     //Return to default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    //Setup frame buffer for shadows
+    glGenTextures(1, &m_texShadowCube);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_texShadowCube);
+    for(int i = 0; i < 6; ++i)
+    {
+      glTexImage2D(
+          GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+          0, GL_DEPTH_COMPONENT,
+          m_shadowMapSize,
+          m_shadowMapSize,
+          0,
+          GL_DEPTH_COMPONENT,
+          GL_FLOAT,
+          NULL);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glGenFramebuffers(1, &m_shadowCubeFBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadowCubeFBO);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_texShadowCube, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    //Return to default framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glClearDepth(1.0);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
@@ -225,6 +266,10 @@ namespace ne
 
     m_shdShadows = LoadShader("shaders/shadows_vert.glsl", "shaders/shadows_frag.glsl");
     if(!m_shdShadows)
+      return false;
+
+    m_shdCubeShadows = LoadShader("shaders/cubeshadows_vert.glsl", "shaders/cubeshadows_frag.glsl", "shaders/cubeshadows_geom.glsl");
+    if(!m_shdCubeShadows)
       return false;
 
     m_shdCompositor = LoadShader("shaders/compositor_vert.glsl", "shaders/compositor_frag.glsl");
@@ -321,7 +366,7 @@ namespace ne
 
   void Renderer::UpdateProjectionMatrix()
   {
-    glm::mat4 proj = glm::perspective(20.0, 16.0/9.0, 0.1, 100.0);
+    glm::mat4 proj = glm::perspective(glm::radians(65.0), 16.0/9.0, 0.1, 100.0);
     glm::mat4 rot =
       glm::rotate(glm::mat4(1.0), m_viewTilt, glm::vec3(1,0,0)) *
       glm::rotate(glm::mat4(1.0), m_viewYaw, glm::vec3(0,1,0));
@@ -396,41 +441,63 @@ namespace ne
 
   void Renderer::DrawPointLights()
   {
-    glUseProgram(m_shdPointLight);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_texLambert);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_texNormal);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
-
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, m_texDepth);
-
-    glUniformMatrix4fv(glGetUniformLocation(m_shdPointLight, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
-    glUniform3f(glGetUniformLocation(m_shdPointLight, "viewPos"), m_viewPos.x, m_viewPos.y, m_viewPos.z);
-    glUniform2f(glGetUniformLocation(m_shdPointLight, "screenSize"), (float)m_width, (float)m_height);
-    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampLambert"), 0);
-    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampNormal"), 1);
-    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampPBRMaps"), 2);
-    glUniform1i(glGetUniformLocation(m_shdPointLight, "sampDepth"), 3);
-
-    const GLint lightPosLoc = glGetUniformLocation(m_shdPointLight, "lightPos");
-    const GLint lightColorLoc = glGetUniformLocation(m_shdPointLight, "lightColor");
+    const GLint matViewLoc         = glGetUniformLocation(m_shdPointLight, "matView");
+    const GLint viewPosLoc         = glGetUniformLocation(m_shdPointLight, "viewPos");
+    const GLint screenSizeLoc      = glGetUniformLocation(m_shdPointLight, "screenSize");
+    const GLint sampLambertLoc     = glGetUniformLocation(m_shdPointLight, "sampLambert");
+    const GLint sampNormalLoc      = glGetUniformLocation(m_shdPointLight, "sampNormal");
+    const GLint sampPBRMapsLoc     = glGetUniformLocation(m_shdPointLight, "sampPBRMaps");
+    const GLint sampDepthLoc       = glGetUniformLocation(m_shdPointLight, "sampDepth");
+    const GLint sampShadowLoc      = glGetUniformLocation(m_shdPointLight, "sampShadow");
+    const GLint lightPosLoc        = glGetUniformLocation(m_shdPointLight, "lightPos");
+    const GLint lightColorLoc      = glGetUniformLocation(m_shdPointLight, "lightColor");
     const GLint lightBrightnessLoc = glGetUniformLocation(m_shdPointLight, "lightBrightness");
+    const GLint farPlaneLoc        = glGetUniformLocation(m_shdPointLight, "farPlane");
 
-    glBindVertexArray(m_pPlane->m_vaoConfig);
+
     for(auto& light : m_pointLights)
     {
+      // First render shadow map
+      const double nearPlane = 0.1, farPlane = 30.0;
+      DrawPointShadowMap(light.pos, nearPlane, farPlane);
+      glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
+
+      // Now render lighting shader
+      glUseProgram(m_shdPointLight);
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, m_texLambert);
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, m_texNormal);
+
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, m_texPBRMaps);
+
+      glActiveTexture(GL_TEXTURE3);
+      glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
+      glActiveTexture(GL_TEXTURE4);
+      glBindTexture(GL_TEXTURE_CUBE_MAP, m_texShadowCube);
+
+      glUniformMatrix4fv(matViewLoc, 1, GL_FALSE, &m_matProjection[0][0]);
+      glUniform3f(viewPosLoc, m_viewPos.x, m_viewPos.y, m_viewPos.z);
+      glUniform2f(screenSizeLoc, (float)m_width, (float)m_height);
+      glUniform1i(sampLambertLoc, 0);
+      glUniform1i(sampNormalLoc,  1);
+      glUniform1i(sampPBRMapsLoc, 2);
+      glUniform1i(sampDepthLoc,   3);
+      glUniform1i(sampShadowLoc,  4);
       glUniform3f(lightPosLoc, light.pos.x, light.pos.y, light.pos.z);
       glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
       glUniform1f(lightBrightnessLoc, light.brightness);
+      glUniform1f(farPlaneLoc, (float)farPlane);
+
+      glDepthFunc(GL_ALWAYS);
+      glBindVertexArray(m_pPlane->m_vaoConfig);
       glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
+      glBindVertexArray(0);
     }
-    glBindVertexArray(0);
   }
 
   void Renderer::DrawDirectionalLights()
@@ -492,12 +559,12 @@ namespace ne
     for(auto& light : m_spotLights)
     {
       //First render shadow map
-      const double nearPlane = 0.1f, farPlane = 30.0f;
+      const double nearPlane = 0.1, farPlane = 30.0;
       const glm::mat4 lightProj = glm::perspective(light.outerAngle * 2.0, 1.0, nearPlane, farPlane);
       const glm::mat4 lightView = glm::lookAt(light.pos, light.pos + light.dir, glm::vec3(0,1,0));
       const glm::mat4 lightSpace = lightProj * lightView;
 
-      DrawShadowMap(lightSpace);
+      DrawSpotShadowMap(lightSpace);
       glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
 
       // Now render lighting shader
@@ -542,7 +609,7 @@ namespace ne
     }
   }
 
-  void Renderer::DrawShadowMap(glm::mat4 lightProj)
+  void Renderer::DrawSpotShadowMap(glm::mat4 lightProj)
   {
     glViewport(0, 0, m_shadowMapSize, m_shadowMapSize);
     glBindFramebuffer(GL_FRAMEBUFFER, m_shadowFBO);
@@ -552,6 +619,56 @@ namespace ne
     glUseProgram(m_shdShadows);
     glUniformMatrix4fv(glGetUniformLocation(m_shdShadows, "matLight"), 1, GL_FALSE, &lightProj[0][0]);
     const GLint matPosLoc = glGetUniformLocation(m_shdShadows, "matPos");
+
+    for(auto& model : m_models)
+    {
+      glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+
+      glBindVertexArray(model.mesh->m_vaoConfig);
+
+      if(model.mesh->m_iNumIndices > 0)
+      {
+        glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+      }
+      else
+      {
+        glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+      }
+
+      glBindVertexArray(0);
+    }
+
+    glViewport(0, 0, m_width, m_height);
+  }
+
+  void Renderer::DrawPointShadowMap(glm::vec3 position, double nearPlane, double farPlane)
+  {
+    glViewport(0, 0, m_shadowMapSize, m_shadowMapSize);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadowCubeFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glDepthFunc(GL_LESS);
+    glUseProgram(m_shdCubeShadows);
+
+    glm::mat4 lightProj = glm::perspective(glm::radians(90.0), 1.0, nearPlane, farPlane);
+    glm::mat4 lightTransforms[6] = {
+      lightProj * glm::lookAt(position, position + glm::vec3( 1,0,0), glm::vec3(0,-1,0)),
+      lightProj * glm::lookAt(position, position + glm::vec3(-1,0,0), glm::vec3(0,-1,0)),
+      lightProj * glm::lookAt(position, position + glm::vec3(0, 1,0), glm::vec3(0,0, 1)),
+      lightProj * glm::lookAt(position, position + glm::vec3(0,-1,0), glm::vec3(0,0,-1)),
+      lightProj * glm::lookAt(position, position + glm::vec3(0,0, 1), glm::vec3(0,-1,0)),
+      lightProj * glm::lookAt(position, position + glm::vec3(0,0,-1), glm::vec3(0,-1,0))
+    };
+
+    for(int i = 0; i < 6; ++i)
+    {
+      std::string name = "matLight[" + std::to_string(i) + "]";
+      glUniformMatrix4fv(glGetUniformLocation(m_shdCubeShadows, name.c_str()), 1, GL_FALSE, &lightTransforms[i][0][0]);
+    }
+
+    glUniform3f(glGetUniformLocation(m_shdCubeShadows, "lightPos"), position.x, position.y, position.z);
+    glUniform1f(glGetUniformLocation(m_shdCubeShadows, "farPlane"), (float)farPlane);
+    const GLint matPosLoc = glGetUniformLocation(m_shdCubeShadows, "matPos");
 
     for(auto& model : m_models)
     {
@@ -620,28 +737,45 @@ namespace ne
     m_curTime += dt;
   }
 
-  GLuint Renderer::LoadShader(const std::string &vsPath, const std::string &fsPath)
+  GLuint Renderer::LoadShader(const std::string &vsPath, const std::string &fsPath, const std::string &gsPath)
   {
     //Read the sources
     std::vector<char> vSrc(4096);
-    std::ifstream vsIs(vsPath, std::ios::in);
-    if(!vsIs.is_open())
     {
-      std::cerr << "Could not open vertex shader: " << vsPath << std::endl;
-      return 0;
+      std::ifstream vsIs(vsPath, std::ios::in);
+      if(!vsIs.is_open())
+      {
+        std::cerr << "Could not open vertex shader: " << vsPath << std::endl;
+        return 0;
+      }
+      vsIs.read(&vSrc[0], vSrc.size());
+      vsIs.close();
     }
-    vsIs.read(&vSrc[0], vSrc.size());
-    vsIs.close();
 
     std::vector<char> fSrc(4096);
-    std::ifstream fsIs(fsPath, std::ios::in);
-    if(!fsIs.is_open())
     {
-      std::cerr << "Could not open fragment shader: " << fsPath << std::endl;
-      return 0;
+      std::ifstream fsIs(fsPath, std::ios::in);
+      if(!fsIs.is_open())
+      {
+        std::cerr << "Could not open fragment shader: " << fsPath << std::endl;
+        return 0;
+      }
+      fsIs.read(&fSrc[0], fSrc.size());
+      fsIs.close();
     }
-    fsIs.read(&fSrc[0], fSrc.size());
-    fsIs.close();
+
+    std::vector<char> gSrc(4096);
+    if(!gsPath.empty())
+    {
+      std::ifstream gsIs(gsPath, std::ios::in);
+      if(!gsIs.is_open())
+      {
+        std::cerr << "Could not open geometry shader: " << gsPath << std::endl;
+        return 0;
+      }
+      gsIs.read(&gSrc[0], gSrc.size());
+      gsIs.close();
+    }
 
     //Build the shaders
     GLint status;
@@ -679,10 +813,34 @@ namespace ne
       return 0;
     }
 
+    GLuint gs = 0;
+    if(gSrc[0])
+    {
+      gs = glCreateShader(GL_GEOMETRY_SHADER);
+      const char *gSrcPtr = &gSrc[0];
+      glShaderSource(gs, 1, &gSrcPtr, NULL);
+      glCompileShader(gs);
+      glGetShaderiv(gs, GL_COMPILE_STATUS, &status);
+      if(status != GL_TRUE)
+      {
+        GLint logLen;
+        glGetShaderiv(gs, GL_INFO_LOG_LENGTH, &logLen);
+        std::vector<char> gLog(logLen);
+        glGetShaderInfoLog(gs, logLen, NULL, &gLog[0]);
+        std::cerr << "Geometry shader failed to compile: " << &gLog[0] << std::endl;
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+        glDeleteShader(gs);
+        return 0;
+      }
+    }
+
     // Link the program
     GLuint prog = glCreateProgram();
     glAttachShader(prog, vs);
     glAttachShader(prog, fs);
+    if(gs)
+      glAttachShader(prog, gs);
     glLinkProgram(prog);
 
     // Check the program
@@ -701,6 +859,7 @@ namespace ne
 
     glDeleteShader(vs);
     glDeleteShader(fs);
+    glDeleteShader(gs);
     return prog;
   }
 

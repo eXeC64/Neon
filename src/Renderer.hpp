@@ -93,7 +93,7 @@ namespace ne
     void AddTime(double dt);
 
   private:
-    GLuint LoadShader(const std::string &vsPath, const std::string &fsPath);
+    GLuint LoadShader(const std::string &vsPath, const std::string &fsPath, const std::string &gsPath = "");
 
     void SetupGeometryPass();
     void SetupLightPass();
@@ -103,7 +103,8 @@ namespace ne
     void DrawPointLights();
     void DrawDirectionalLights();
     void DrawSpotLights();
-    void DrawShadowMap(glm::mat4 matView);
+    void DrawSpotShadowMap(glm::mat4 matView);
+    void DrawPointShadowMap(glm::vec3 position, double nearPlane, double farPlane);
     void DrawDebugMesh(const Mesh* mesh, const DebugInstance &instance);
     void UpdateProjectionMatrix();
     void ApplyGlobalIllumination();
@@ -126,6 +127,7 @@ namespace ne
     GLuint m_shdGlobalIllum;
     GLuint m_shdDebug;
     GLuint m_shdShadows;
+    GLuint m_shdCubeShadows;
     GLuint m_shdCompositor;
     GLuint m_texLambert;
     GLuint m_texNormal;
@@ -134,8 +136,10 @@ namespace ne
     GLuint m_texComposite;
     GLuint m_FBO;
     GLuint m_shadowFBO;
+    GLuint m_shadowCubeFBO;
     GLuint m_compositeFBO;
     GLuint m_texShadow;
+    GLuint m_texShadowCube;
     Mesh* m_pPlane;
     Mesh* m_pCube;
     Mesh* m_pSphere;
