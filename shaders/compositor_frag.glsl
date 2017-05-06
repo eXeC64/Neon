@@ -9,6 +9,12 @@ uniform sampler2D sampDepth;
 
 uniform vec2 screenSize;
 uniform float gamma;
+uniform float exposure;
+
+vec3 tonemap(float exposure, vec3 color)
+{
+  return vec3(1.0) - exp(-color * exposure);
+}
 
 vec3 gammaCorrect(float gamma, vec3 color)
 {
@@ -18,7 +24,7 @@ vec3 gammaCorrect(float gamma, vec3 color)
 void main()
 {
   vec2 screenPos = gl_FragCoord.xy / screenSize;
-  vec3 color = texture(sampBuffer, screenPos).rgb;
-  outColor = gammaCorrect(gamma, color);
+  vec3 hdrColor = texture(sampBuffer, screenPos).rgb;
+  outColor = gammaCorrect(gamma, tonemap(exposure, hdrColor));
   gl_FragDepth = texture(sampDepth, screenPos).r;
 }

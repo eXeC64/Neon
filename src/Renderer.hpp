@@ -78,6 +78,7 @@ namespace ne
     void SetViewPosition(glm::vec3 pos, float yaw, float tilt);
     void SetGlobalIllumination(glm::vec3 color);
     void SetGamma(float gamma);
+    void SetExposure(float exposure);
 
     //Add to current frame
     void AddMesh(Mesh *pMesh, Material *pMat, glm::mat4 matPosition);
@@ -120,6 +121,7 @@ namespace ne
     float m_viewYaw;
     float m_viewTilt;
     float m_gamma;
+    float m_exposure;
     GLuint m_shdMesh;
     GLuint m_shdPointLight;
     GLuint m_shdDirectionalLight;

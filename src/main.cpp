@@ -156,6 +156,7 @@ int main(int argc, char **argv)
 
     static float globalIllum = 0.005;
     static float gamma = 2.2;
+    static float exposure = 1.0;
 
     static bool cameraLight = false;
     static glm::vec3 cameraLightCol(1.0);
@@ -236,6 +237,7 @@ int main(int argc, char **argv)
 
       ImGui::SliderFloat("Global Illumination", &globalIllum, 0.0, 1.0);
       ImGui::SliderFloat("Gamma", &gamma, 1.0, 3.0);
+      ImGui::SliderFloat("Exposure", &exposure, 0.01, 10.0);
       ImGui::Separator();
       ImGui::Checkbox("Sun", &sun);
       ImGui::SliderFloat("Sun Strength", &sunStrength, 0.0, 1.0);
@@ -336,6 +338,7 @@ int main(int argc, char **argv)
 
     pRenderer->SetGlobalIllumination(glm::vec3(globalIllum));
     pRenderer->SetGamma(gamma);
+    pRenderer->SetExposure(exposure);
 
     pRenderer->EndFrame();
     gui.Render();

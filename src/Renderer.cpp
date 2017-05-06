@@ -42,6 +42,7 @@ namespace ne
     m_viewYaw(0),
     m_viewTilt(0),
     m_gamma(2.2),
+    m_exposure(1.0),
     m_shdMesh(0),
     m_shdPointLight(0),
     m_shdDirectionalLight(0),
@@ -910,6 +911,7 @@ namespace ne
     glUniform1i(glGetUniformLocation(m_shdCompositor, "sampDepth"), 1);
 
     glUniform1f(glGetUniformLocation(m_shdCompositor, "gamma"), m_gamma);
+    glUniform1f(glGetUniformLocation(m_shdCompositor, "exposure"), m_exposure);
     glUniform2f(glGetUniformLocation(m_shdCompositor, "screenSize"), (float)m_width, (float)m_height);
 
     glEnableVertexAttribArray(0);
@@ -927,6 +929,11 @@ namespace ne
   void Renderer::SetGamma(float gamma)
   {
     m_gamma = gamma;
+  }
+
+  void Renderer::SetExposure(float exposure)
+  {
+    m_exposure = exposure;
   }
 
   void Renderer::ApplyGlobalIllumination()
