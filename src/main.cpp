@@ -290,29 +290,29 @@ int main(int argc, char **argv)
     ImGui::DragFloat3("Position", &spotPos.x, 0.01);
     ImGui::DragFloat3("Direction", &spotDir.x, 0.1);
     ImGui::ColorEdit3("Color", &spotColor.x);
-    pRenderer->AddSpotLight(ne::SpotLight(spotPos, glm::normalize(spotDir),
-            glm::radians(20.0f),
-            glm::radians(25.0f),
-            spotColor,
-            1.0f));
+    /* pRenderer->AddSpotLight(ne::SpotLight(spotPos, glm::normalize(spotDir), */
+    /*         glm::radians(20.0f), */
+    /*         glm::radians(25.0f), */
+    /*         spotColor, */
+    /*         1.0f)); */
 
-    pRenderer->AddSpotLight(
-          ne::SpotLight(
-            glm::vec3(11.916, 8.254, 5.693),
-            glm::normalize(glm::vec3(-1.0, -0.2, -0.6)),
-            glm::radians(20.0f),
-            glm::radians(25.0f),
-            glm::vec3(1),
-            1.0f));
+    /* pRenderer->AddSpotLight( */
+    /*       ne::SpotLight( */
+    /*         glm::vec3(11.916, 8.254, 5.693), */
+    /*         glm::normalize(glm::vec3(-1.0, -0.2, -0.6)), */
+    /*         glm::radians(20.0f), */
+    /*         glm::radians(25.0f), */
+    /*         glm::vec3(1), */
+    /*         1.0f)); */
 
-    pRenderer->AddSpotLight(
-          ne::SpotLight(
-            glm::vec3(4.5, 7.5, -6.0),
-            glm::normalize(glm::vec3(0.0, -0.2, 1.0)),
-            glm::radians(20.0f),
-            glm::radians(25.0f),
-            glm::vec3(1),
-            1.0f));
+    /* pRenderer->AddSpotLight( */
+    /*       ne::SpotLight( */
+    /*         glm::vec3(4.5, 7.5, -6.0), */
+    /*         glm::normalize(glm::vec3(0.0, -0.2, 1.0)), */
+    /*         glm::radians(20.0f), */
+    /*         glm::radians(25.0f), */
+    /*         glm::vec3(1), */
+    /*         1.0f)); */
 
 
     if(floatingLightSphere)
