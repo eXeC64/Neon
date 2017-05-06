@@ -381,6 +381,10 @@ int main(int argc, char **argv)
           {
             cameraYaw += 0.30 * dt * e.motion.xrel;
             cameraTilt += 0.30 * dt * e.motion.yrel;
+            if(cameraTilt < glm::radians(-90.0f))
+              cameraTilt = glm::radians(-90.0f);
+            else if(cameraTilt > glm::radians(90.0f))
+              cameraTilt = glm::radians(90.0f);
           }
           break;
 
@@ -405,9 +409,9 @@ int main(int argc, char **argv)
       if(keyboard[SDL_SCANCODE_S])
         cameraPos -= glm::vec3(moveSpeed * dt) * cameraNorm;
       if(keyboard[SDL_SCANCODE_A])
-        cameraPos -= glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
+        cameraPos -= glm::vec3(moveSpeed * dt) * glm::normalize(glm::cross(cameraNorm,glm::vec3(0,1,0)));
       if(keyboard[SDL_SCANCODE_D])
-        cameraPos += glm::vec3(moveSpeed * dt) * glm::cross(cameraNorm,glm::vec3(0,1,0));
+        cameraPos += glm::vec3(moveSpeed * dt) * glm::normalize(glm::cross(cameraNorm,glm::vec3(0,1,0)));
       if(keyboard[SDL_SCANCODE_SPACE])
         cameraPos += glm::vec3(moveSpeed * dt) * glm::vec3(0,1,0);
       if(keyboard[SDL_SCANCODE_LCTRL])
