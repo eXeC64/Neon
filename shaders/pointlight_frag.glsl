@@ -38,7 +38,7 @@ float calcShadow(vec3 worldPos, vec3 worldNormal)
   float closestDepth = texture(sampShadow, fragToLight).r * farPlane;
   float currentDepth = length(fragToLight);
 
-  float bias = max(0.05 * (1.0 - dot(worldNormal, fragToLight)), 0.005);
+  float bias = max(0.1 * (1.0 - dot(worldNormal, fragToLight)), 0.005);
   return closestDepth > currentDepth - bias ? 1.0 : 0.0;
 }
 
