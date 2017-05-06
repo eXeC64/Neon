@@ -888,7 +888,6 @@ namespace ne
   {
     glDisable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glDepthFunc(GL_LESS);
     glDisable(GL_BLEND);
   }
@@ -904,7 +903,12 @@ namespace ne
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_texComposite);
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texDepth);
+
     glUniform1i(glGetUniformLocation(m_shdCompositor, "sampBuffer"), 0);
+    glUniform1i(glGetUniformLocation(m_shdCompositor, "sampDepth"), 1);
+
     glUniform1f(glGetUniformLocation(m_shdCompositor, "gamma"), m_gamma);
     glUniform2f(glGetUniformLocation(m_shdCompositor, "screenSize"), (float)m_width, (float)m_height);
 

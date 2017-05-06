@@ -5,6 +5,7 @@ precision highp float;
 layout (location = 0) out vec3 outColor;
 
 uniform sampler2D sampBuffer;
+uniform sampler2D sampDepth;
 
 uniform vec2 screenSize;
 uniform float gamma;
@@ -19,4 +20,5 @@ void main()
   vec2 screenPos = gl_FragCoord.xy / screenSize;
   vec3 color = texture(sampBuffer, screenPos).rgb;
   outColor = gammaCorrect(gamma, color);
+  gl_FragDepth = texture(sampDepth, screenPos).r;
 }
