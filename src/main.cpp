@@ -167,6 +167,7 @@ int main(int argc, char **argv)
 
     static bool debugMenu = false;
     static bool positionOverlay = false;
+    static bool fpsOverlay = false;
     static bool lightsMenu = true;
     static bool sun = false;
     static float sunStrength = 0.5;
@@ -184,6 +185,10 @@ int main(int argc, char **argv)
         ImGui::MenuItem("Debug", NULL, debugMenu);
         if(ImGui::IsItemClicked())
           debugMenu = !debugMenu;
+
+        ImGui::MenuItem("Show FPS", NULL, fpsOverlay);
+        if(ImGui::IsItemClicked())
+          fpsOverlay = !fpsOverlay;
 
         ImGui::MenuItem("Position Overlay", NULL, positionOverlay);
         if(ImGui::IsItemClicked())
@@ -228,6 +233,22 @@ int main(int argc, char **argv)
                          |ImGuiWindowFlags_NoSavedSettings);
       ImGui::Text("Camera Position: %8.3f %8.3f %8.3f", cameraPos.x, cameraPos.y, cameraPos.z);
       ImGui::Text(" Light Position: %8.3f %8.3f %8.3f", lightPos.x, lightPos.y, lightPos.z);
+      ImGui::End();
+    }
+
+    if(fpsOverlay)
+    {
+      ImGui::SetNextWindowPos(ImVec2(10,40));
+      ImGui::Begin("FPS",
+                       NULL,
+                       ImVec2(0,0),
+                       0.5f,
+                       ImGuiWindowFlags_NoTitleBar
+                         |ImGuiWindowFlags_NoResize
+                         |ImGuiWindowFlags_NoMove
+                         |ImGuiWindowFlags_NoSavedSettings);
+      ImGui::Text("FPS: %.0f", 1.0 / dt);
+      ImGui::Text("Frame Time: %1.3fms", dt);
       ImGui::End();
     }
 
