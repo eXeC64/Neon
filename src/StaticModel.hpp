@@ -10,16 +10,16 @@ namespace ne
   class StaticMesh;
   class Material;
 
-  class Model
+  class StaticModel
   {
     friend class Renderer;
     friend class Loader;
 
   public:
-    ~Model();
+    ~StaticModel();
 
   private:
-    Model();
+    StaticModel();
   public:
     std::vector<StaticMesh*> m_meshes;
     std::vector<Material*> m_materials;

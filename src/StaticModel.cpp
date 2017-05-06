@@ -1,15 +1,15 @@
-#include "Model.hpp"
+#include "StaticModel.hpp"
 #include "StaticMesh.hpp"
 #include "OpenGL.hpp"
 
 namespace ne
 {
 
-  Model::Model()
+  StaticModel::StaticModel()
   {
   }
 
-  Model::~Model()
+  StaticModel::~StaticModel()
   {
     for(StaticMesh* mesh : m_meshes)
       delete mesh;

@@ -9,7 +9,7 @@ class aiScene;
 
 namespace ne
 {
-  class Model;
+  class StaticModel;
   class StaticMesh;
   class Texture;
 
@@ -33,14 +33,14 @@ namespace ne
     static Texture* GenerateBlankMap(unsigned char value);
     static Texture* GeneratePurpleCheques();
 
-    Model* LoadModel(const std::string &path);
+    StaticModel* LoadStaticModel(const std::string &path);
     Texture* LoadTexture(const std::string &path, enum TextureFormat format);
 
   private:
-    void ProcessModelNode(Model* model, const aiScene* scene, const aiNode* node);
+    void ProcessModelNode(StaticModel* model, const aiScene* scene, const aiNode* node);
     StaticMesh* LoadStaticMesh(const aiMesh* mesh);
 
     std::unordered_map<std::string, Texture*> m_textures;
-    std::unordered_map<std::string, Model*> m_models;
+    std::unordered_map<std::string, StaticModel*> m_models;
   };
 }

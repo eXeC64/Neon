@@ -2,7 +2,7 @@
 
 #include "Material.hpp"
 #include "StaticMesh.hpp"
-#include "Model.hpp"
+#include "StaticModel.hpp"
 #include "Texture.hpp"
 
 #include <assimp/Importer.hpp>
@@ -91,7 +91,7 @@ namespace ne
     return pMesh;
   }
 
-  void Loader::ProcessModelNode(Model* model, const aiScene* scene, const aiNode* node)
+  void Loader::ProcessModelNode(StaticModel* model, const aiScene* scene, const aiNode* node)
   {
     for(GLuint i = 0; i < node->mNumMeshes; ++i)
     {
@@ -124,7 +124,7 @@ namespace ne
     }
   }
 
-  Model* Loader::LoadModel(const std::string &path)
+  StaticModel* Loader::LoadStaticModel(const std::string &path)
   {
     //Check cache
     {
@@ -143,7 +143,7 @@ namespace ne
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
       return nullptr;
 
-    Model* model = new Model();
+    StaticModel* model = new StaticModel();
     ProcessModelNode(model, scene, scene->mRootNode);
 
     m_models[path] = model;

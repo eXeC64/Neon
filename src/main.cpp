@@ -9,7 +9,7 @@
 #include "OpenGL.hpp"
 #include "Renderer.hpp"
 #include "Loader.hpp"
-#include "Model.hpp"
+#include "StaticModel.hpp"
 #include "StaticMesh.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
@@ -119,8 +119,9 @@ int main(int argc, char **argv)
 
   ne::Loader loader;
 
-  ne::Model *sponza = loader.LoadModel("meshes/sponza.obj");
-  ne::Model *nanosuit = loader.LoadModel("meshes/nanosuit.obj");
+  ne::StaticModel *sponza = loader.LoadStaticModel("meshes/sponza.obj");
+  ne::StaticModel *nanosuit = loader.LoadStaticModel("meshes/nanosuit.obj");
+  ne::StaticModel *cowboy = loader.LoadStaticModel("meshes/cowboy.dae");
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
