@@ -39,6 +39,8 @@ namespace ne
       io.KeyMap[ImGuiKey_Z] = SDLK_z;
     }
 
+    glGenBuffers(1, &m_vboVertices);
+    glGenBuffers(1, &m_vboIndices);
 
     // Set up shader for the gui
     {
