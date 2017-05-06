@@ -72,6 +72,7 @@ struct Light
   bool debug;
   glm::vec3 pos;
   glm::vec3 color;
+  float bright;
 };
 
 int main(int argc, char **argv)
@@ -244,7 +245,7 @@ int main(int argc, char **argv)
       ImGui::Button("Add Light");
       if(ImGui::IsItemClicked())
       {
-        lights.push_back(Light{true, true, glm::vec3{0, 2, 0}, glm::vec3{1}});
+        lights.push_back(Light{true, true, glm::vec3{0, 2, 0}, glm::vec3{1}, 1.0});
       }
 
       for(size_t i = 0; i < lights.size(); ++i)
@@ -256,6 +257,7 @@ int main(int argc, char **argv)
         ImGui::Checkbox("Debug", &light.debug);
         ImGui::DragFloat3("Position", &light.pos.x, 0.01);
         ImGui::ColorEdit3("Color", &light.color.x);
+        ImGui::DragFloat("Brightness", &light.bright, 0.01);
         ImGui::Button("Delete");
         if(ImGui::IsItemClicked())
           lights.erase(lights.begin() + i);
@@ -266,13 +268,13 @@ int main(int argc, char **argv)
     }
 
     if(cameraLight)
-      pRenderer->AddPointLight(ne::PointLight(cameraPos, cameraLightCol));
+      pRenderer->AddPointLight(ne::PointLight(cameraPos, cameraLightCol, 1.0f));
 
     if(sun)
-      pRenderer->AddDirectionalLight(ne::DirectionalLight(sunDir, sunCol * sunStrength));
+      pRenderer->AddDirectionalLight(ne::DirectionalLight(sunDir, sunCol, sunStrength));
 
     if(floatingLight)
-      pRenderer->AddPointLight(ne::PointLight(lightPos, floatingLightCol));
+      pRenderer->AddPointLight(ne::PointLight(lightPos, floatingLightCol, 1.0f));
 
     /* pRenderer->AddSpotLight( */
     /*       ne::SpotLight(cameraPos, cameraNorm, */
@@ -289,7 +291,8 @@ int main(int argc, char **argv)
     pRenderer->AddSpotLight(ne::SpotLight(spotPos, glm::normalize(spotDir),
             glm::radians(20.0f),
             glm::radians(25.0f),
-            spotColor));
+            spotColor,
+            1.0f));
 
     pRenderer->AddSpotLight(
           ne::SpotLight(
@@ -297,7 +300,8 @@ int main(int argc, char **argv)
             glm::normalize(glm::vec3(-1.0, -0.2, -0.6)),
             glm::radians(20.0f),
             glm::radians(25.0f),
-            glm::vec3(1)));
+            glm::vec3(1),
+            1.0f));
 
     pRenderer->AddSpotLight(
           ne::SpotLight(
@@ -305,7 +309,8 @@ int main(int argc, char **argv)
             glm::normalize(glm::vec3(0.0, -0.2, 1.0)),
             glm::radians(20.0f),
             glm::radians(25.0f),
-            glm::vec3(1)));
+            glm::vec3(1),
+            1.0f));
 
 
     if(floatingLightSphere)
@@ -319,7 +324,7 @@ int main(int argc, char **argv)
     {
       if(light.enabled)
       {
-        pRenderer->AddPointLight(ne::PointLight(light.pos, light.color));
+        pRenderer->AddPointLight(ne::PointLight(light.pos, light.color, light.bright));
         if(light.debug)
         {
           glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.2));

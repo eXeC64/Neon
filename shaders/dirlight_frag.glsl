@@ -11,6 +11,7 @@ uniform sampler2D sampDepth;
 
 uniform vec3 lightDir;
 uniform vec3 lightColor;
+uniform float lightBrightness;
 uniform vec2 screenSize;
 
 void main()
@@ -21,7 +22,7 @@ void main()
   float depth = texture(sampDepth, screenPos).x;
 
   float cosTheta = max(dot(normalize(lightDir), worldNormal), 0.0);
-  vec3 radiance = lightColor * cosTheta;
+  vec3 radiance = lightBrightness * lightColor * cosTheta;
 
   outColor = vec3(0.0);
   if(depth < 1.0)

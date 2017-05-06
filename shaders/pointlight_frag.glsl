@@ -9,10 +9,11 @@ uniform sampler2D sampNormal;
 uniform sampler2D sampPBRMaps;
 uniform sampler2D sampDepth;
 
-uniform vec3 lightPos;
-uniform vec3 lightColor;
-uniform vec2 screenSize;
-uniform mat4 matView;
+uniform vec3  lightPos;
+uniform vec3  lightColor;
+uniform float lightBrightness;
+uniform vec2  screenSize;
+uniform mat4  matView;
 
 vec3 calcWorldPos(vec2 screenPos)
 {
@@ -40,7 +41,7 @@ void main()
   vec3 lightDir = normalize(lightPos - worldPos);
   float cosTheta = max(dot(worldNormal, lightDir), 0.0);
   float attenuation = calcAttenuation(worldPos, lightPos);
-  vec3 radiance = lightColor * cosTheta * attenuation;
+  vec3 radiance = lightBrightness * lightColor * cosTheta * attenuation;
 
   outColor = vec3(0.0);
   if(depth < 1.0)

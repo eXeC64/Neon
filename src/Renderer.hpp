@@ -23,29 +23,37 @@ namespace ne
 
   struct PointLight
   {
-    PointLight(glm::vec3 pos, glm::vec3 color)
-      : pos(pos), color(color) {};
+    PointLight(glm::vec3 pos, glm::vec3 color, float brightness)
+      : pos(pos), color(color), brightness(brightness) {};
     glm::vec3 pos;
     glm::vec3 color;
+    float brightness;
   };
 
   struct DirectionalLight
   {
-    DirectionalLight(glm::vec3 dir, glm::vec3 color)
-      : dir(dir), color(color) {};
+    DirectionalLight(glm::vec3 dir, glm::vec3 color, float brightness)
+      : dir(dir), color(color), brightness(brightness) {};
     glm::vec3 dir;
     glm::vec3 color;
+    float brightness;
   };
 
   struct SpotLight
   {
-    SpotLight(glm::vec3 pos, glm::vec3 dir, float innerAngle, float outerAngle, glm::vec3 color)
-      : pos(pos), dir(dir), innerAngle(innerAngle), outerAngle(outerAngle), color(color) {};
+    SpotLight(glm::vec3 pos, glm::vec3 dir, float innerAngle, float outerAngle, glm::vec3 color, float brightness)
+      : pos(pos)
+      , dir(dir)
+      , innerAngle(innerAngle)
+      , outerAngle(outerAngle)
+      , color(color)
+      , brightness(brightness) {};
     glm::vec3 pos;
     glm::vec3 dir;
     float innerAngle;
     float outerAngle;
     glm::vec3 color;
+    float brightness;
   };
 
   struct DebugInstance

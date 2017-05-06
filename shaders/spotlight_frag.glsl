@@ -15,6 +15,7 @@ uniform vec3 lightDir;
 uniform float innerAngle;
 uniform float outerAngle;
 uniform vec3 lightColor;
+uniform float lightBrightness;
 uniform vec2 screenSize;
 uniform mat4 matView;
 uniform mat4 matLight;
@@ -73,7 +74,7 @@ void main()
     float shadow = calcShadow(worldPos);
 
     float cosTheta = max(dot(worldNormal, fragToLight), 0.0);
-    vec3 radiance = lightColor * cosTheta * attenuation * penumbra * shadow;
+    vec3 radiance = lightBrightness * lightColor * cosTheta * attenuation * penumbra * shadow;
     outColor = radiance * lambert;
   }
 }

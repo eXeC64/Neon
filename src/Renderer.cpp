@@ -420,12 +420,14 @@ namespace ne
 
     const GLint lightPosLoc = glGetUniformLocation(m_shdPointLight, "lightPos");
     const GLint lightColorLoc = glGetUniformLocation(m_shdPointLight, "lightColor");
+    const GLint lightBrightnessLoc = glGetUniformLocation(m_shdPointLight, "lightBrightness");
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
     for(auto& light : m_pointLights)
     {
       glUniform3f(lightPosLoc, light.pos.x, light.pos.y, light.pos.z);
       glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glUniform1f(lightBrightnessLoc, light.brightness);
       glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
     }
     glBindVertexArray(0);
@@ -455,12 +457,14 @@ namespace ne
 
     const GLint lightDirLoc = glGetUniformLocation(m_shdDirectionalLight, "lightDir");
     const GLint lightColorLoc = glGetUniformLocation(m_shdDirectionalLight, "lightColor");
+    const GLint lightBrightnessLoc = glGetUniformLocation(m_shdDirectionalLight, "lightBrightness");
 
     glBindVertexArray(m_pPlane->m_vaoConfig);
     for(auto& light : m_directionalLights)
     {
       glUniform3f(lightDirLoc, light.dir.x, light.dir.y, light.dir.z);
       glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glUniform1f(lightBrightnessLoc, light.brightness);
       glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
     }
     glBindVertexArray(0);
@@ -468,21 +472,22 @@ namespace ne
 
   void Renderer::DrawSpotLights()
   {
-    const GLint matViewLoc     = glGetUniformLocation(m_shdSpotLight, "matView");
-    const GLint matLightLoc    = glGetUniformLocation(m_shdSpotLight, "matLight");
-    const GLint screenSizeLoc  = glGetUniformLocation(m_shdSpotLight, "screenSize");
-    const GLint sampLambertLoc = glGetUniformLocation(m_shdSpotLight, "sampLambert");
-    const GLint sampNormalLoc  = glGetUniformLocation(m_shdSpotLight, "sampNormal");
-    const GLint sampPBRMapsLoc = glGetUniformLocation(m_shdSpotLight, "sampPBRMaps");
-    const GLint sampDepthLoc   = glGetUniformLocation(m_shdSpotLight, "sampDepth");
-    const GLint sampShadowLoc  = glGetUniformLocation(m_shdSpotLight, "sampShadow");
-    const GLint lightPosLoc    = glGetUniformLocation(m_shdSpotLight, "lightPos");
-    const GLint lightDirLoc    = glGetUniformLocation(m_shdSpotLight, "lightDir");
-    const GLint innerAngleLoc  = glGetUniformLocation(m_shdSpotLight, "innerAngle");
-    const GLint outerAngleLoc  = glGetUniformLocation(m_shdSpotLight, "outerAngle");
-    const GLint lightColorLoc  = glGetUniformLocation(m_shdSpotLight, "lightColor");
-    const GLint nearPlaneLoc   = glGetUniformLocation(m_shdSpotLight, "nearPlane");
-    const GLint farPlaneLoc    = glGetUniformLocation(m_shdSpotLight, "farPlane");
+    const GLint matViewLoc         = glGetUniformLocation(m_shdSpotLight, "matView");
+    const GLint matLightLoc        = glGetUniformLocation(m_shdSpotLight, "matLight");
+    const GLint screenSizeLoc      = glGetUniformLocation(m_shdSpotLight, "screenSize");
+    const GLint sampLambertLoc     = glGetUniformLocation(m_shdSpotLight, "sampLambert");
+    const GLint sampNormalLoc      = glGetUniformLocation(m_shdSpotLight, "sampNormal");
+    const GLint sampPBRMapsLoc     = glGetUniformLocation(m_shdSpotLight, "sampPBRMaps");
+    const GLint sampDepthLoc       = glGetUniformLocation(m_shdSpotLight, "sampDepth");
+    const GLint sampShadowLoc      = glGetUniformLocation(m_shdSpotLight, "sampShadow");
+    const GLint lightPosLoc        = glGetUniformLocation(m_shdSpotLight, "lightPos");
+    const GLint lightDirLoc        = glGetUniformLocation(m_shdSpotLight, "lightDir");
+    const GLint innerAngleLoc      = glGetUniformLocation(m_shdSpotLight, "innerAngle");
+    const GLint outerAngleLoc      = glGetUniformLocation(m_shdSpotLight, "outerAngle");
+    const GLint lightColorLoc      = glGetUniformLocation(m_shdSpotLight, "lightColor");
+    const GLint lightBrightnessLoc = glGetUniformLocation(m_shdSpotLight, "lightBrightness");
+    const GLint nearPlaneLoc       = glGetUniformLocation(m_shdSpotLight, "nearPlane");
+    const GLint farPlaneLoc        = glGetUniformLocation(m_shdSpotLight, "farPlane");
 
     for(auto& light : m_spotLights)
     {
@@ -526,6 +531,7 @@ namespace ne
       glUniform1f(innerAngleLoc, glm::cos(light.innerAngle));
       glUniform1f(outerAngleLoc, glm::cos(light.outerAngle));
       glUniform3f(lightColorLoc, light.color.x, light.color.y, light.color.z);
+      glUniform1f(lightBrightnessLoc, light.brightness);
       glUniform1f(nearPlaneLoc, nearPlane);
       glUniform1f(farPlaneLoc, farPlane);
 
