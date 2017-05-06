@@ -119,8 +119,8 @@ int main(int argc, char **argv)
 
   ne::Loader loader;
 
-  /* ne::Model *pModel = loader.LoadModel("meshes/nanosuit.obj"); */
-  ne::Model *pModel = loader.LoadModel("meshes/sponza.obj");
+  ne::Model *sponza = loader.LoadModel("meshes/sponza.obj");
+  ne::Model *nanosuit = loader.LoadModel("meshes/nanosuit.obj");
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
@@ -151,9 +151,16 @@ int main(int argc, char **argv)
     pRenderer->BeginFrame();
     gui.NewFrame(pWindow);
 
-    for(size_t i = 0; i < pModel->m_meshes.size(); ++i)
+    for(size_t i = 0; i < sponza->m_meshes.size(); ++i)
+      pRenderer->AddStaticMesh(sponza->m_meshes[i], sponza->m_materials[i], glm::mat4(1.0));
+
     {
-      pRenderer->AddStaticMesh(pModel->m_meshes[i], pModel->m_materials[i], glm::mat4(1.0));
+      float scale = 0.13;
+      float rot = 90.0;
+      glm::mat4 nanoScale = glm::scale(glm::mat4(1), glm::vec3(scale));
+      glm::mat4 nanoRot = glm::rotate(glm::mat4(1), glm::radians(rot), glm::vec3(0,1,0));
+      for(size_t i = 0; i < nanosuit->m_meshes.size(); ++i)
+        pRenderer->AddStaticMesh(nanosuit->m_meshes[i], nanosuit->m_materials[i], nanoScale * nanoRot);
     }
 
 
