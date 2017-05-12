@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <set>
 #include <string>
 #include <queue>
 
@@ -100,6 +101,11 @@ void writeU32(std::ostream &out, uint32_t value)
 void writeF32(std::ostream &out, float value)
 {
   out.write((char*)&value, 4);
+}
+
+void writeF64(std::ostream &out, double value)
+{
+  out.write((char*)&value, 8);
 }
 
 void writeBytes(std::ostream &out, const char* bytes, size_t num)
@@ -451,11 +457,133 @@ bool bakeSkeletelMesh(const std::string& outFile, const std::string& path, const
   return true;
 }
 
+bool bakeAnimation(const std::string& outFile, const std::string& path, const std::string& animName, const std::string& skeletonPath)
+{
+  std::unordered_map<std::string,size_t> boneIds;
+
+  if(!loadSkeletonBoneIds(skeletonPath, boneIds))
+  {
+    std::cerr << "Could not load skeleton from: " << skeletonPath << std::endl;
+    return false;
+  }
+
+  Assimp::Importer importer;
+  const aiScene* scene = importer.ReadFile(path,
+      aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights |
+      aiProcess_GenNormals | aiProcess_GenUVCoords);
+
+  if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    return false;
+
+  for(size_t i = 0; i < scene->mNumAnimations; ++i)
+  {
+    const aiAnimation* anim = scene->mAnimations[i];
+
+    std::cout << "anim name: " << anim->mName.C_Str() << std::endl;
+  }
+
+
+  //for now just use animation 0
+  if(scene->mNumAnimations < 1)
+    return false;
+
+  const aiAnimation* anim = scene->mAnimations[0];
+
+  std::ofstream out(outFile);
+
+  writeU32(out, anim->mNumChannels);
+  for(size_t i = 0; i < anim->mNumChannels; ++i)
+  {
+    const aiNodeAnim* channel = anim->mChannels[i];
+    const std::string nodeName = channel->mNodeName.C_Str();
+    const size_t boneId = boneIds[nodeName];
+    writeU8(out, boneId);
+
+    //Get a set of all the timestamps
+    std::set<double> times;
+    for(size_t j = 0; j < channel->mNumPositionKeys; ++j)
+      times.insert(channel->mPositionKeys[j].mTime);
+    for(size_t j = 0; j < channel->mNumRotationKeys; ++j)
+      times.insert(channel->mRotationKeys[j].mTime);
+
+    // num keys = number of timestamps
+    writeU32(out, times.size());
+
+    //Step through all the timestamps, outputing a key for each one
+    size_t posIdx = 0;
+    size_t rotIdx = 0;
+    for(double t : times)
+    {
+      writeF64(out, t);
+
+      //If we have the exact position, write it
+      if(channel->mPositionKeys[posIdx].mTime == t)
+      {
+        writeF32(out, channel->mPositionKeys[posIdx].mValue.x);
+        writeF32(out, channel->mPositionKeys[posIdx].mValue.y);
+        writeF32(out, channel->mPositionKeys[posIdx].mValue.z);
+        ++posIdx;
+      }
+      else
+      {
+        //Have to interpolate it with the next key
+        glm::vec3 lastPos(channel->mPositionKeys[posIdx].mValue.x,
+                          channel->mPositionKeys[posIdx].mValue.y,
+                          channel->mPositionKeys[posIdx].mValue.z);
+        glm::vec3 nextPos(channel->mPositionKeys[posIdx+1].mValue.x,
+                          channel->mPositionKeys[posIdx+1].mValue.y,
+                          channel->mPositionKeys[posIdx+1].mValue.z);
+        double lastTime = channel->mPositionKeys[posIdx].mTime;
+        double nextTime = channel->mPositionKeys[posIdx+1].mTime;
+
+        glm::vec3 curPos = glm::mix(lastPos, nextPos, (float)((t-lastTime) / (nextTime-lastTime)));
+        writeF32(out, curPos.x);
+        writeF32(out, curPos.y);
+        writeF32(out, curPos.z);
+      }
+
+      //If we have the exact rotation, write it
+      if(channel->mRotationKeys[rotIdx].mTime == t)
+      {
+        writeF32(out, channel->mRotationKeys[rotIdx].mValue.x);
+        writeF32(out, channel->mRotationKeys[rotIdx].mValue.y);
+        writeF32(out, channel->mRotationKeys[rotIdx].mValue.z);
+        writeF32(out, channel->mRotationKeys[rotIdx].mValue.w);
+        ++rotIdx;
+      }
+      else
+      {
+        //Have to interpolate it with the next key
+        glm::quat lastRot(channel->mRotationKeys[rotIdx].mValue.x,
+                          channel->mRotationKeys[rotIdx].mValue.y,
+                          channel->mRotationKeys[rotIdx].mValue.z,
+                          channel->mRotationKeys[rotIdx].mValue.w);
+        glm::quat nextRot(channel->mRotationKeys[rotIdx+1].mValue.x,
+                          channel->mRotationKeys[rotIdx+1].mValue.y,
+                          channel->mRotationKeys[rotIdx+1].mValue.z,
+                          channel->mRotationKeys[rotIdx+1].mValue.w);
+        double lastTime = channel->mRotationKeys[rotIdx].mTime;
+        double nextTime = channel->mRotationKeys[rotIdx+1].mTime;
+
+        glm::quat curRot = glm::mix(lastRot, nextRot, (float)((t-lastTime) / (nextTime-lastTime)));
+        writeF32(out, curRot[0]);
+        writeF32(out, curRot[1]);
+        writeF32(out, curRot[2]);
+        writeF32(out, curRot[3]);
+      }
+    }
+  }
+  std::cout << "Animation written" << std::endl;
+
+  return true;
+}
+
 int main(int argc, char** argv)
 {
-  bakeSkeleton("cowboy.skel", "meshes/cowboy.dae", "Armature");
+  /* bakeSkeleton("cowboy.skel", "meshes/cowboy.dae", "Armature"); */
   /* bakeStaticMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube"); */
-  bakeSkeletelMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube", "cowboy.skel");
+  /* bakeSkeletelMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube", "cowboy.skel"); */
+  bakeAnimation("cowboy_run.anim", "meshes/cowboy.dae", "Armature", "cowboy.skel");
   return 0;
 }
 
