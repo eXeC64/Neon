@@ -11,14 +11,14 @@ TARGET = neon
 $(TARGET): $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-# build/%.o: src/%.cpp
-# 	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
 build/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 build/%.o: thirdparty/imgui/%.cpp
 	$(CXX) -o $@ -c $<
+
+baker: baker_src/main.cpp
+	$(CXX) -o $@ $^ -lassimp
 
 clean:
 	$(RM) $(TARGET) $(OBJS)
