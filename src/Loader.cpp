@@ -1,8 +1,11 @@
 #include "Loader.hpp"
 
+#include "Animation.hpp"
 #include "Material.hpp"
 #include "StaticMesh.hpp"
 #include "StaticModel.hpp"
+#include "AnimatedMesh.hpp"
+#include "AnimatedModel.hpp"
 #include "Texture.hpp"
 
 #include <assimp/Importer.hpp>
@@ -10,10 +13,49 @@
 #include <assimp/postprocess.h>
 #include <glm/ext.hpp>
 #include <png.h>
+#include <queue>
 #include <vector>
+#include <set>
+#include <unordered_map>
+#include <iostream>
+#include <fstream>
 
 namespace ne
 {
+
+  namespace
+  {
+    uint8_t readU8(std::istream &in)
+    {
+      return in.get();
+    }
+
+    uint32_t readU32(std::istream &in)
+    {
+      uint32_t ret;
+      in.read((char*)&ret, 4);
+      return ret;
+    }
+
+    float readF32(std::istream &in)
+    {
+      float ret;
+      in.read((char*)&ret, 4);
+      return ret;
+    }
+
+    void readBytes(std::istream &in, char* buf, size_t num)
+    {
+      in.read(buf, num);
+    }
+
+    glm::mat4 readM44(std::istream &in)
+    {
+      glm::mat4 ret;
+      readBytes(in, (char*)&ret[0][0], 16 * 4);
+      return ret;
+    }
+  }
 
   Loader::Loader()
   {
@@ -23,7 +65,9 @@ namespace ne
   {
     for(auto it : m_textures)
       delete it.second;
-    for(auto it : m_models)
+    for(auto it : m_staticModels)
+      delete it.second;
+    for(auto it : m_animatedModels)
       delete it.second;
   }
 
@@ -128,8 +172,8 @@ namespace ne
   {
     //Check cache
     {
-      auto it = m_models.find(path);
-      if(it != m_models.end()) {
+      auto it = m_staticModels.find(path);
+      if(it != m_staticModels.end()) {
         return it->second;
       }
     }
@@ -146,8 +190,114 @@ namespace ne
     StaticModel* model = new StaticModel();
     ProcessModelNode(model, scene, scene->mRootNode);
 
-    m_models[path] = model;
+    m_staticModels[path] = model;
     return model;
+  }
+
+  AnimatedModel* Loader::LoadAnimatedModel(const std::string &path)
+  {
+    return nullptr;
+  }
+
+  Skeleton* Loader::LoadSkeleton(const std::string& path)
+  {
+    std::ifstream in(path);
+
+    if(!in.good())
+      return nullptr;
+
+    const size_t boneCount = readU32(in);
+
+    Skeleton* skel = new Skeleton;
+    for(size_t i = 0; i < boneCount; ++i)
+    {
+      Bone b;
+      b.id = readU8(in);
+      b.localPos.x = readF32(in);
+      b.localPos.y = readF32(in);
+      b.localPos.z = readF32(in);
+      b.localRot[0] = readF32(in);
+      b.localRot[1] = readF32(in);
+      b.localRot[2] = readF32(in);
+      b.localRot[3] = readF32(in);
+      b.invTransform = readM44(in);
+      std::string name(readU8(in), ' ');
+      readBytes(in, &name[0], name.length());
+      b.name = name;
+
+      const uint8_t numChildren = readU8(in);
+      for(size_t j = 0; j < numChildren; ++j)
+        b.childIds.push_back(readU8(in));
+
+      skel->bones.push_back(b);
+    }
+
+    return skel;
+  }
+
+  AnimatedMesh* Loader::LoadAnimatedMesh(const std::string& path)
+  {
+    std::ifstream in(path);
+
+    if(!in.good())
+      return nullptr;
+
+    const char flags = readU8(in);
+
+    //Check whether this is a skeletel mesh
+    if(!flags & 1)
+      return nullptr;
+
+    const size_t numVerts = readU32(in);
+    const size_t numIndices = readU32(in);
+
+    std::vector<GLfloat> vertexData(16 * numVerts);
+    std::vector<GLuint> indexData(numIndices);
+
+    //Load all the vertex data in one go
+    readBytes(in, (char*)&vertexData[0], 16 * sizeof(GLfloat) * numVerts);
+
+    //Load all the index data in one go
+    readBytes(in, (char*)&indexData[0], 4 * numIndices);
+
+    AnimatedMesh* pMesh = new AnimatedMesh();
+    pMesh->m_iNumTris = numVerts / 3;
+    pMesh->m_iNumIndices = numIndices;
+    pMesh->m_iStride = 16 * sizeof(GLfloat);
+    pMesh->m_iOffPos = 0 * sizeof(GLfloat);
+    pMesh->m_iOffNormal = 3 * sizeof(GLfloat);
+    pMesh->m_iOffUV = 6 * sizeof(GLfloat);
+    pMesh->m_iOffBoneWeights = 8 * sizeof(GLfloat);
+    pMesh->m_iOffBoneIds = 12 * sizeof(GLfloat);
+
+    glGenVertexArrays(1, &pMesh->m_vaoConfig);
+    glGenBuffers(1, &pMesh->m_vboVertices);
+    glGenBuffers(1, &pMesh->m_vboIndices);
+
+    glBindVertexArray(pMesh->m_vaoConfig);
+
+    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(GLfloat), &vertexData[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->m_vboIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData.size() * sizeof(GLuint), &indexData[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
+
+    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffBoneWeights);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffBoneIds);
+
+    glBindVertexArray(0);
+
+    return pMesh;
   }
 
   Texture* Loader::LoadTexture(const std::string &path, enum TextureFormat format)

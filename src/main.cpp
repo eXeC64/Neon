@@ -11,6 +11,8 @@
 #include "Loader.hpp"
 #include "StaticModel.hpp"
 #include "StaticMesh.hpp"
+#include "AnimatedModel.hpp"
+#include "AnimatedMesh.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
 #include "ImguiWrapper.hpp"
@@ -121,7 +123,8 @@ int main(int argc, char **argv)
 
   ne::StaticModel *sponza = loader.LoadStaticModel("meshes/sponza.obj");
   ne::StaticModel *nanosuit = loader.LoadStaticModel("meshes/nanosuit.obj");
-  ne::StaticModel *cowboy = loader.LoadStaticModel("meshes/cowboy.dae");
+  ne::AnimatedMesh *cowboy = loader.LoadAnimatedMesh("cowboy.mesh");
+  ne::Skeleton *cowboySkel = loader.LoadSkeleton("cowboy.skel");
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;

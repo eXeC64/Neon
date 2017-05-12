@@ -3,14 +3,19 @@
 #include <string>
 #include <unordered_map>
 
+class aiAnimation;
 class aiMesh;
 class aiNode;
 class aiScene;
 
 namespace ne
 {
-  class StaticModel;
+  class AnimatedMesh;
+  class AnimatedModel;
+  class Animation;
+  class Skeleton;
   class StaticMesh;
+  class StaticModel;
   class Texture;
 
   enum class TextureFormat
@@ -34,13 +39,18 @@ namespace ne
     static Texture* GeneratePurpleCheques();
 
     StaticModel* LoadStaticModel(const std::string &path);
+    AnimatedModel* LoadAnimatedModel(const std::string &path);
+    AnimatedMesh* LoadAnimatedMesh(const std::string& path);
+    Skeleton* LoadSkeleton(const std::string& path);
     Texture* LoadTexture(const std::string &path, enum TextureFormat format);
 
   private:
     void ProcessModelNode(StaticModel* model, const aiScene* scene, const aiNode* node);
     StaticMesh* LoadStaticMesh(const aiMesh* mesh);
 
+
     std::unordered_map<std::string, Texture*> m_textures;
-    std::unordered_map<std::string, StaticModel*> m_models;
+    std::unordered_map<std::string, StaticModel*> m_staticModels;
+    std::unordered_map<std::string, AnimatedModel*> m_animatedModels;
   };
 }
