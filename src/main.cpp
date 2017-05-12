@@ -163,8 +163,23 @@ int main(int argc, char **argv)
       float rot = 90.0;
       glm::mat4 nanoScale = glm::scale(glm::mat4(1), glm::vec3(scale));
       glm::mat4 nanoRot = glm::rotate(glm::mat4(1), glm::radians(rot), glm::vec3(0,1,0));
-      for(size_t i = 0; i < nanosuit->m_meshes.size(); ++i)
-        pRenderer->AddStaticMesh(nanosuit->m_meshes[i], nanosuit->m_materials[i], nanoScale * nanoRot);
+      /* for(size_t i = 0; i < nanosuit->m_meshes.size(); ++i) */
+        /* pRenderer->AddStaticMesh(nanosuit->m_meshes[i], nanosuit->m_materials[i], nanoScale * nanoRot); */
+    }
+
+    {
+      float scale = 0.30;
+      float rot = -90.0;
+      glm::mat4 matScale = glm::scale(glm::mat4(1), glm::vec3(scale));
+      glm::mat4 matRot = glm::rotate(glm::mat4(1), glm::radians(rot), glm::vec3(1,0,0));
+      static std::vector<glm::mat4> boneTransforms(32, glm::mat4(1.0));
+      /* boneTransforms[0] = glm::mat4(1.0); */
+      /* static float headOffset = 0.0; */
+      ImGui::SliderFloat("Head height", &cowboySkel->bones[9].localPos.z, 0.0, 5.0);
+      cowboySkel->calculateInvTransforms(boneTransforms);
+      /* boneTransforms[9] = glm::translate(glm::mat4(1.0), glm::vec3(0.0f,0.0f,headOffset)); */
+
+      pRenderer->AddAnimatedMesh(cowboy, nullptr, matScale * matRot, &boneTransforms);
     }
 
 

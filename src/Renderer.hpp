@@ -9,6 +9,7 @@
 namespace ne
 {
   class StaticMesh;
+  class AnimatedMesh;
   class Material;
   class Texture;
 
@@ -19,6 +20,16 @@ namespace ne
     StaticMesh* mesh;
     Material* mat;
     glm::mat4 pos;
+  };
+
+  struct AnimatedMeshInstance
+  {
+    AnimatedMeshInstance(AnimatedMesh* pMesh, Material* pMat, glm::mat4 position, const std::vector<glm::mat4> *boneTransforms)
+      : mesh(pMesh), mat(pMat), pos(position), boneTransforms(boneTransforms) {};
+    AnimatedMesh* mesh;
+    Material* mat;
+    glm::mat4 pos;
+    const std::vector<glm::mat4> *boneTransforms;
   };
 
   struct PointLight
@@ -82,6 +93,7 @@ namespace ne
 
     //Add to current frame
     void AddStaticMesh(StaticMesh *pMesh, Material *pMat, glm::mat4 matPosition);
+    void AddAnimatedMesh(AnimatedMesh *pMesh, Material *pMat, glm::mat4 matPosition, const std::vector<glm::mat4> *boneTransforms);
     void AddPointLight(const PointLight& light);
     void AddDirectionalLight(const DirectionalLight& light);
     void AddSpotLight(const SpotLight& light);
@@ -101,6 +113,7 @@ namespace ne
     void SetupDebugPass();
     void CompositeFrame();
     void DrawStaticMeshes();
+    void DrawAnimatedMeshes();
     void DrawPointLights();
     void DrawDirectionalLights();
     void DrawSpotLights();
@@ -122,7 +135,8 @@ namespace ne
     float m_viewTilt;
     float m_gamma;
     float m_exposure;
-    GLuint m_shdMesh;
+    GLuint m_shdStaticMesh;
+    GLuint m_shdAnimatedMesh;
     GLuint m_shdPointLight;
     GLuint m_shdDirectionalLight;
     GLuint m_shdSpotLight;
@@ -149,7 +163,8 @@ namespace ne
     Texture *m_pDefaultNormal;
     Texture *m_pDefaultMetallic;
     Texture *m_pDefaultRoughness;
-    std::vector<StaticMeshInstance> m_models;
+    std::vector<StaticMeshInstance> m_staticMeshes;
+    std::vector<AnimatedMeshInstance> m_animatedMeshes;
     std::vector<PointLight> m_pointLights;
     std::vector<DirectionalLight> m_directionalLights;
     std::vector<SpotLight> m_spotLights;

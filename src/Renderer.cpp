@@ -1,6 +1,7 @@
 #include "Renderer.hpp"
 
 #include "StaticMesh.hpp"
+#include "AnimatedMesh.hpp"
 #include "Material.hpp"
 #include "Texture.hpp"
 #include "Loader.hpp"
@@ -28,6 +29,8 @@ namespace
     glBindTexture(GL_TEXTURE_2D, 0);
     return buf;
   }
+
+  const int MAX_BONES = 32;
 }
 
 namespace ne
@@ -43,7 +46,8 @@ namespace ne
     m_viewTilt(0),
     m_gamma(2.2),
     m_exposure(1.0),
-    m_shdMesh(0),
+    m_shdStaticMesh(0),
+    m_shdAnimatedMesh(0),
     m_shdPointLight(0),
     m_shdDirectionalLight(0),
     m_shdSpotLight(0),
@@ -74,8 +78,10 @@ namespace ne
 
   Renderer::~Renderer()
   {
-    if(m_shdMesh)
-      glDeleteProgram(m_shdMesh);
+    if(m_shdStaticMesh)
+      glDeleteProgram(m_shdStaticMesh);
+    if(m_shdAnimatedMesh)
+      glDeleteProgram(m_shdAnimatedMesh);
     if(m_shdPointLight)
       glDeleteProgram(m_shdPointLight);
     if(m_shdDirectionalLight)
@@ -241,8 +247,12 @@ namespace ne
     glFrontFace(GL_CCW);
 
 
-    m_shdMesh = LoadShader("shaders/mesh_vert.glsl", "shaders/mesh_frag.glsl");
-    if(!m_shdMesh)
+    m_shdStaticMesh = LoadShader("shaders/mesh_vert.glsl", "shaders/mesh_frag.glsl");
+    if(!m_shdStaticMesh)
+      return false;
+
+    m_shdAnimatedMesh = LoadShader("shaders/animmesh_vert.glsl", "shaders/animmesh_frag.glsl");
+    if(!m_shdAnimatedMesh)
       return false;
 
     m_shdPointLight = LoadShader("shaders/light_vert.glsl", "shaders/pointlight_frag.glsl");
@@ -313,7 +323,8 @@ namespace ne
   {
     m_bIsMidFrame = true;
     //Clear out existing lights and geometry
-    m_models.clear();
+    m_staticMeshes.clear();
+    m_animatedMeshes.clear();
     m_pointLights.clear();
     m_directionalLights.clear();
     m_spotLights.clear();
@@ -328,6 +339,7 @@ namespace ne
 
     //Draw the geometry into the g buffers
     DrawStaticMeshes();
+    DrawAnimatedMeshes();
 
     //Prepare for lighting pass
     SetupLightPass();
@@ -380,21 +392,29 @@ namespace ne
     if(!pMesh || !pMat || !m_bIsMidFrame)
       return;
 
-    m_models.push_back(StaticMeshInstance(pMesh, pMat, matPosition));
+    m_staticMeshes.push_back(StaticMeshInstance(pMesh, pMat, matPosition));
+  }
+
+  void Renderer::AddAnimatedMesh(AnimatedMesh *pMesh, Material *pMat, glm::mat4 matPosition, const std::vector<glm::mat4> *boneTransforms)
+  {
+    if(!pMesh || !boneTransforms || !m_bIsMidFrame)
+      return;
+
+    m_animatedMeshes.push_back(AnimatedMeshInstance(pMesh, pMat, matPosition, boneTransforms));
   }
 
   void Renderer::DrawStaticMeshes()
   {
-    glUseProgram(m_shdMesh);
-    glUniformMatrix4fv(glGetUniformLocation(m_shdMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+    glUseProgram(m_shdStaticMesh);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdStaticMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
 
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampLambert"), 0);
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampNormal"), 1);
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampMetallic"), 2);
-    glUniform1i(glGetUniformLocation(m_shdMesh, "sampRoughness"), 3);
+    glUniform1i(glGetUniformLocation(m_shdStaticMesh, "sampLambert"), 0);
+    glUniform1i(glGetUniformLocation(m_shdStaticMesh, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdStaticMesh, "sampMetallic"), 2);
+    glUniform1i(glGetUniformLocation(m_shdStaticMesh, "sampRoughness"), 3);
 
-    GLint matPosLoc = glGetUniformLocation(m_shdMesh, "matPos");
-    for(auto& model : m_models)
+    GLint matPosLoc = glGetUniformLocation(m_shdStaticMesh, "matPos");
+    for(auto& model : m_staticMeshes)
     {
       glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
 
@@ -411,6 +431,69 @@ namespace ne
         pMetallic = m_pDefaultMetallic;
 
       Texture *pRoughness = model.mat->m_pRoughness;
+      if(!pRoughness)
+        pRoughness = m_pDefaultRoughness;
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, pLambert->m_glTexture);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, pNormal->m_glTexture);
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, pMetallic->m_glTexture);
+      glActiveTexture(GL_TEXTURE3);
+      glBindTexture(GL_TEXTURE_2D, pRoughness->m_glTexture);
+
+      glBindVertexArray(model.mesh->m_vaoConfig);
+
+      if(model.mesh->m_iNumIndices > 0)
+      {
+        glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+      }
+      else
+      {
+        glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+      }
+    }
+
+    glBindVertexArray(0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+  }
+
+  void Renderer::DrawAnimatedMeshes()
+  {
+    glUseProgram(m_shdAnimatedMesh);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdAnimatedMesh, "matView"), 1, GL_FALSE, &m_matProjection[0][0]);
+
+    glUniform1i(glGetUniformLocation(m_shdAnimatedMesh, "sampLambert"), 0);
+    glUniform1i(glGetUniformLocation(m_shdAnimatedMesh, "sampNormal"), 1);
+    glUniform1i(glGetUniformLocation(m_shdAnimatedMesh, "sampMetallic"), 2);
+    glUniform1i(glGetUniformLocation(m_shdAnimatedMesh, "sampRoughness"), 3);
+
+    GLint matPosLoc = glGetUniformLocation(m_shdAnimatedMesh, "matPos");
+    GLint matBonesLoc = glGetUniformLocation(m_shdAnimatedMesh, "boneTransforms");
+    for(auto& model : m_animatedMeshes)
+    {
+      glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+      glUniformMatrix4fv(
+          matBonesLoc,
+          model.boneTransforms->size(),
+          GL_FALSE,
+          &model.boneTransforms->data()[0][0][0]);
+
+      Texture *pLambert = model.mat ? model.mat->m_pLambert : nullptr;
+      if(!pLambert)
+        pLambert = m_pDefaultLambert;
+
+      Texture *pNormal = model.mat ? model.mat->m_pNormal : nullptr;
+      if(!pNormal)
+        pNormal = m_pDefaultNormal;
+
+      Texture *pMetallic = model.mat ? model.mat->m_pMetallic : nullptr;
+      if(!pMetallic)
+        pMetallic = m_pDefaultMetallic;
+
+      Texture *pRoughness = model.mat ? model.mat->m_pRoughness : nullptr;
       if(!pRoughness)
         pRoughness = m_pDefaultRoughness;
 
@@ -621,7 +704,7 @@ namespace ne
     glUniformMatrix4fv(glGetUniformLocation(m_shdShadows, "matLight"), 1, GL_FALSE, &lightProj[0][0]);
     const GLint matPosLoc = glGetUniformLocation(m_shdShadows, "matPos");
 
-    for(auto& model : m_models)
+    for(auto& model : m_staticMeshes)
     {
       glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
 
@@ -671,7 +754,7 @@ namespace ne
     glUniform1f(glGetUniformLocation(m_shdCubeShadows, "farPlane"), (float)farPlane);
     const GLint matPosLoc = glGetUniformLocation(m_shdCubeShadows, "matPos");
 
-    for(auto& model : m_models)
+    for(auto& model : m_staticMeshes)
     {
       glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
 
