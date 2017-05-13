@@ -7,8 +7,9 @@ Plan:
 
  * [x] Deferred shading
  * [x] Dynamic point lights
- * [ ] Dynamic spot lights
+ * [x] Dynamic spot lights
  * [ ] Dynamic area lights
+ * [x] Skeletal animation support
  * [x] Normal mapping support
  * [ ] Displacement mapping support
  * [ ] Physics-based rendering
