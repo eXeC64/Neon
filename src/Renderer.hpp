@@ -144,6 +144,8 @@ namespace ne
     GLuint m_shdDebug;
     GLuint m_shdShadows;
     GLuint m_shdCubeShadows;
+    GLuint m_shdAnimShadows;
+    GLuint m_shdAnimCubeShadows;
     GLuint m_shdCompositor;
     GLuint m_texLambert;
     GLuint m_texNormal;

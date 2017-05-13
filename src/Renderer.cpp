@@ -55,6 +55,8 @@ namespace ne
     m_shdDebug(0),
     m_shdShadows(0),
     m_shdCubeShadows(0),
+    m_shdAnimShadows(0),
+    m_shdAnimCubeShadows(0),
     m_shdCompositor(0),
     m_texLambert(0),
     m_texNormal(0),
@@ -96,6 +98,10 @@ namespace ne
       glDeleteProgram(m_shdShadows);
     if(m_shdCubeShadows)
       glDeleteProgram(m_shdCubeShadows);
+    if(m_shdAnimShadows)
+      glDeleteProgram(m_shdAnimShadows);
+    if(m_shdAnimCubeShadows)
+      glDeleteProgram(m_shdAnimCubeShadows);
     if(m_shdCompositor)
       glDeleteProgram(m_shdCompositor);
     if(m_texLambert)
@@ -275,12 +281,20 @@ namespace ne
     if(!m_shdDebug)
       return false;
 
-    m_shdShadows = LoadShader("shaders/shadows_vert.glsl", "shaders/shadows_frag.glsl");
+    m_shdShadows = LoadShader("shaders/static_shadows_vert.glsl", "shaders/shadows_frag.glsl");
     if(!m_shdShadows)
       return false;
 
-    m_shdCubeShadows = LoadShader("shaders/cubeshadows_vert.glsl", "shaders/cubeshadows_frag.glsl", "shaders/cubeshadows_geom.glsl");
+    m_shdCubeShadows = LoadShader("shaders/static_shadows_vert.glsl", "shaders/cubeshadows_frag.glsl", "shaders/cubeshadows_geom.glsl");
     if(!m_shdCubeShadows)
+      return false;
+
+    m_shdAnimShadows = LoadShader("shaders/anim_shadows_vert.glsl", "shaders/shadows_frag.glsl");
+    if(!m_shdAnimShadows)
+      return false;
+
+    m_shdAnimCubeShadows = LoadShader("shaders/anim_shadows_vert.glsl", "shaders/cubeshadows_frag.glsl", "shaders/cubeshadows_geom.glsl");
+    if(!m_shdAnimCubeShadows)
       return false;
 
     m_shdCompositor = LoadShader("shaders/compositor_vert.glsl", "shaders/compositor_frag.glsl");
@@ -470,8 +484,8 @@ namespace ne
     glUniform1i(glGetUniformLocation(m_shdAnimatedMesh, "sampMetallic"), 2);
     glUniform1i(glGetUniformLocation(m_shdAnimatedMesh, "sampRoughness"), 3);
 
-    GLint matPosLoc = glGetUniformLocation(m_shdAnimatedMesh, "matPos");
-    GLint matBonesLoc = glGetUniformLocation(m_shdAnimatedMesh, "boneTransforms");
+    const GLint matPosLoc = glGetUniformLocation(m_shdAnimatedMesh, "matPos");
+    const GLint matBonesLoc = glGetUniformLocation(m_shdAnimatedMesh, "boneTransforms");
     for(auto& model : m_animatedMeshes)
     {
       glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
@@ -624,7 +638,7 @@ namespace ne
   void Renderer::DrawSpotLights()
   {
     const GLint matViewLoc         = glGetUniformLocation(m_shdSpotLight, "matView");
-    const GLint matLightLoc        = glGetUniformLocation(m_shdSpotLight, "matLight");
+    const GLint matLightProjLoc    = glGetUniformLocation(m_shdSpotLight, "matLightProj");
     const GLint screenSizeLoc      = glGetUniformLocation(m_shdSpotLight, "screenSize");
     const GLint sampLambertLoc     = glGetUniformLocation(m_shdSpotLight, "sampLambert");
     const GLint sampNormalLoc      = glGetUniformLocation(m_shdSpotLight, "sampNormal");
@@ -670,7 +684,7 @@ namespace ne
       glBindTexture(GL_TEXTURE_2D, m_texShadow);
 
       glUniformMatrix4fv(matViewLoc, 1, GL_FALSE, &m_matProjection[0][0]);
-      glUniformMatrix4fv(matLightLoc, 1, GL_FALSE, &lightSpace[0][0]);
+      glUniformMatrix4fv(matLightProjLoc, 1, GL_FALSE, &lightSpace[0][0]);
       glUniform2f(screenSizeLoc, (float)m_width, (float)m_height);
       glUniform1i(sampLambertLoc, 0);
       glUniform1i(sampNormalLoc,  1);
@@ -701,7 +715,7 @@ namespace ne
 
     glDepthFunc(GL_LESS);
     glUseProgram(m_shdShadows);
-    glUniformMatrix4fv(glGetUniformLocation(m_shdShadows, "matLight"), 1, GL_FALSE, &lightProj[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdShadows, "matLightProj"), 1, GL_FALSE, &lightProj[0][0]);
     const GLint matPosLoc = glGetUniformLocation(m_shdShadows, "matPos");
 
     for(auto& model : m_staticMeshes)
@@ -746,17 +760,58 @@ namespace ne
 
     for(int i = 0; i < 6; ++i)
     {
-      std::string name = "matLight[" + std::to_string(i) + "]";
+      std::string name = "matLightPos[" + std::to_string(i) + "]";
       glUniformMatrix4fv(glGetUniformLocation(m_shdCubeShadows, name.c_str()), 1, GL_FALSE, &lightTransforms[i][0][0]);
     }
 
+    glm::mat4 identity(1.0);
+    glUniformMatrix4fv(glGetUniformLocation(m_shdCubeShadows, "matLightProj"), 1, GL_FALSE, &identity[0][0]);
+
     glUniform3f(glGetUniformLocation(m_shdCubeShadows, "lightPos"), position.x, position.y, position.z);
     glUniform1f(glGetUniformLocation(m_shdCubeShadows, "farPlane"), (float)farPlane);
-    const GLint matPosLoc = glGetUniformLocation(m_shdCubeShadows, "matPos");
+    const GLint staticMatPosLoc = glGetUniformLocation(m_shdCubeShadows, "matPos");
 
     for(auto& model : m_staticMeshes)
     {
-      glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+      glUniformMatrix4fv(staticMatPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+
+      glBindVertexArray(model.mesh->m_vaoConfig);
+
+      if(model.mesh->m_iNumIndices > 0)
+      {
+        glDrawElements(GL_TRIANGLES, model.mesh->m_iNumIndices, GL_UNSIGNED_INT, 0);
+      }
+      else
+      {
+        glDrawArrays(GL_TRIANGLES, 0, model.mesh->m_iNumTris*3);
+      }
+
+      glBindVertexArray(0);
+    }
+
+    glUseProgram(m_shdAnimCubeShadows);
+
+    for(int i = 0; i < 6; ++i)
+    {
+      std::string name = "matLightPos[" + std::to_string(i) + "]";
+      glUniformMatrix4fv(glGetUniformLocation(m_shdAnimCubeShadows, name.c_str()), 1, GL_FALSE, &lightTransforms[i][0][0]);
+    }
+
+    glUniformMatrix4fv(glGetUniformLocation(m_shdAnimCubeShadows, "matLightProj"), 1, GL_FALSE, &identity[0][0]);
+
+    glUniform3f(glGetUniformLocation(m_shdAnimCubeShadows, "lightPos"), position.x, position.y, position.z);
+    glUniform1f(glGetUniformLocation(m_shdAnimCubeShadows, "farPlane"), (float)farPlane);
+    const GLint animMatPosLoc = glGetUniformLocation(m_shdAnimCubeShadows, "matPos");
+    const GLint matBonesLoc = glGetUniformLocation(m_shdAnimCubeShadows, "boneTransforms");
+
+    for(auto& model : m_animatedMeshes)
+    {
+      glUniformMatrix4fv(animMatPosLoc, 1, GL_FALSE, &model.pos[0][0]);
+      glUniformMatrix4fv(
+          matBonesLoc,
+          model.boneTransforms->size(),
+          GL_FALSE,
+          &model.boneTransforms->data()[0][0][0]);
 
       glBindVertexArray(model.mesh->m_vaoConfig);
 
