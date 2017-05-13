@@ -10,8 +10,9 @@ namespace ne
   {
   public:
     std::vector<Bone> bones;
-    void calculateInvTransforms(std::vector<glm::mat4>& outTrans);
+    void calculateTransforms(std::vector<glm::mat4>& outTrans) const;
+    void calculateInvTransforms(std::vector<glm::mat4>& outTrans) const;
   private:
-    void chainTransforms(const glm::mat4& parentMat, size_t bone, std::vector<glm::mat4>& outTrans);
+    void chainTransforms(const glm::mat4& parentMat, size_t bone, std::vector<glm::mat4>& outTrans) const;
   };
 }
