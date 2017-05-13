@@ -13,6 +13,7 @@
 #include "StaticMesh.hpp"
 #include "AnimatedModel.hpp"
 #include "AnimatedMesh.hpp"
+#include "Animation.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
 #include "ImguiWrapper.hpp"
@@ -125,6 +126,7 @@ int main(int argc, char **argv)
   ne::StaticModel *nanosuit = loader.LoadStaticModel("meshes/nanosuit.obj");
   ne::AnimatedMesh *cowboy = loader.LoadAnimatedMesh("cowboy.mesh");
   ne::Skeleton *cowboySkel = loader.LoadSkeleton("cowboy.skel");
+  ne::Animation *runAnim = loader.LoadAnimation("cowboy_run.anim");
 
   glm::vec3 cameraPos(10,7,0);
   float cameraYaw = -1.5;
@@ -172,14 +174,37 @@ int main(int argc, char **argv)
       float rot = -90.0;
       glm::mat4 matScale = glm::scale(glm::mat4(1), glm::vec3(scale));
       glm::mat4 matRot = glm::rotate(glm::mat4(1), glm::radians(rot), glm::vec3(1,0,0));
-      static std::vector<glm::mat4> boneTransforms(32, glm::mat4(1.0));
-      /* boneTransforms[0] = glm::mat4(1.0); */
-      /* static float headOffset = 0.0; */
-      ImGui::SliderFloat("Head height", &cowboySkel->bones[9].localPos.z, 0.0, 5.0);
-      cowboySkel->calculateInvTransforms(boneTransforms);
-      /* boneTransforms[9] = glm::translate(glm::mat4(1.0), glm::vec3(0.0f,0.0f,headOffset)); */
+      static float timePoint = 0.01;
+      static float speed = 1.0;
+      runAnim->apply(cowboySkel, timePoint);
 
-      pRenderer->AddAnimatedMesh(cowboy, nullptr, matScale * matRot, &boneTransforms);
+      static std::vector<glm::mat4> boneTransforms(32, glm::mat4(1.0));
+      static std::vector<glm::mat4> boneInvTransforms(32, glm::mat4(1.0));
+      cowboySkel->calculateTransforms(boneTransforms);
+      cowboySkel->calculateInvTransforms(boneInvTransforms);
+
+      static bool drawMesh = true;
+      static bool drawSpheres = true;
+      static bool play = false;
+      ImGui::Checkbox("Draw mesh", &drawMesh);
+      ImGui::Checkbox("Draw joints", &drawSpheres);
+      ImGui::Checkbox("Play", &play);
+      ImGui::SliderFloat("Anim Time", &timePoint, 0.01, runAnim->duration());
+      ImGui::SliderFloat("Anim Speed", &speed, 0.01, 1.0);
+
+      if(play)
+        timePoint += dt * speed;
+      while(timePoint > runAnim->duration())
+        timePoint -= runAnim->duration();
+      if(drawMesh)
+        pRenderer->AddAnimatedMesh(cowboy, nullptr, matScale * matRot, &boneInvTransforms);
+
+      for(size_t i = 0; i < 16; ++i)
+      {
+        glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(0.5));
+        if(drawSpheres)
+          pRenderer->AddDebugSphere(matRot * matScale * boneTransforms[i] * scale, glm::vec3(0,1,0));
+      }
     }
 
 
