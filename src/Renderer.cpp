@@ -930,7 +930,7 @@ namespace ne
       glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &logLen);
       std::vector<char> vLog(logLen);
       glGetShaderInfoLog(vs, logLen, NULL, &vLog[0]);
-      std::cerr << "Vertex shader failed to compile: " << &vLog[0] << std::endl;
+      std::cerr << vsPath << " failed to compile: " << &vLog[0] << std::endl;
       glDeleteShader(vs);
       return 0;
     }
@@ -946,7 +946,7 @@ namespace ne
       glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &logLen);
       std::vector<char> fLog(logLen);
       glGetShaderInfoLog(fs, logLen, NULL, &fLog[0]);
-      std::cerr << "Fragment shader failed to compile: " << &fLog[0] << std::endl;
+      std::cerr << fsPath << " failed to compile: " << &fLog[0] << std::endl;
       glDeleteShader(vs);
       glDeleteShader(fs);
       return 0;
@@ -966,7 +966,7 @@ namespace ne
         glGetShaderiv(gs, GL_INFO_LOG_LENGTH, &logLen);
         std::vector<char> gLog(logLen);
         glGetShaderInfoLog(gs, logLen, NULL, &gLog[0]);
-        std::cerr << "Geometry shader failed to compile: " << &gLog[0] << std::endl;
+        std::cerr << gsPath << " failed to compile: " << &gLog[0] << std::endl;
         glDeleteShader(vs);
         glDeleteShader(fs);
         glDeleteShader(gs);
