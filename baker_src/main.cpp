@@ -506,7 +506,7 @@ bool bakeAnimation(const std::string& outFile, const std::string& path, const st
     for(size_t j = 0; j < channel->mNumRotationKeys; ++j)
       times.insert(channel->mRotationKeys[j].mTime);
 
-    // num keys = number of timestamps
+    // num keys = number of unique timestamps
     writeU32(out, times.size());
 
     //Step through all the timestamps, outputing a key for each one
@@ -565,7 +565,7 @@ bool bakeAnimation(const std::string& outFile, const std::string& path, const st
         double lastTime = channel->mRotationKeys[rotIdx].mTime;
         double nextTime = channel->mRotationKeys[rotIdx+1].mTime;
 
-        glm::quat curRot = glm::mix(lastRot, nextRot, (float)((t-lastTime) / (nextTime-lastTime)));
+        glm::quat curRot = glm::slerp(lastRot, nextRot, (float)((t-lastTime) / (nextTime-lastTime)));
         writeF32(out, curRot[0]);
         writeF32(out, curRot[1]);
         writeF32(out, curRot[2]);
@@ -580,9 +580,9 @@ bool bakeAnimation(const std::string& outFile, const std::string& path, const st
 
 int main(int argc, char** argv)
 {
-  /* bakeSkeleton("cowboy.skel", "meshes/cowboy.dae", "Armature"); */
+  bakeSkeleton("cowboy.skel", "meshes/cowboy.dae", "Armature");
   /* bakeStaticMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube"); */
-  /* bakeSkeletelMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube", "cowboy.skel"); */
+  bakeSkeletelMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube", "cowboy.skel");
   bakeAnimation("cowboy_run.anim", "meshes/cowboy.dae", "Armature", "cowboy.skel");
   return 0;
 }
