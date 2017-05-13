@@ -44,6 +44,13 @@ namespace ne
       return ret;
     }
 
+    double readF64(std::istream &in)
+    {
+      double ret;
+      in.read((char*)&ret, 8);
+      return ret;
+    }
+
     void readBytes(std::istream &in, char* buf, size_t num)
     {
       in.read(buf, num);
@@ -298,6 +305,49 @@ namespace ne
     glBindVertexArray(0);
 
     return pMesh;
+  }
+
+  Animation* Loader::LoadAnimation(const std::string& path)
+  {
+    std::ifstream in(path);
+
+    if(!in.good())
+      return nullptr;
+
+    const size_t numChannels = readU32(in);
+
+    Animation* anim = new Animation();
+
+    for(size_t i = 0; i < numChannels; ++i)
+    {
+      AnimationChannel channel;
+      channel.boneId = readU8(in);
+
+      const size_t numKeys = readU32(in);
+      for(size_t k = 0; k < numKeys; ++k)
+      {
+        Keyframe keyframe;
+        keyframe.time = readF64(in);
+
+        //Update the duration of the animation
+        anim->m_duration = std::max(anim->m_duration, keyframe.time);
+
+        keyframe.position.x = readF32(in);
+        keyframe.position.y = readF32(in);
+        keyframe.position.z = readF32(in);
+
+        keyframe.rotation.x = readF32(in);
+        keyframe.rotation.y = readF32(in);
+        keyframe.rotation.z = readF32(in);
+        keyframe.rotation.w = readF32(in);
+
+        channel.keyframes.push_back(keyframe);
+      }
+
+      anim->m_channels.push_back(channel);
+    }
+
+    return anim;
   }
 
   Texture* Loader::LoadTexture(const std::string &path, enum TextureFormat format)

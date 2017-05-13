@@ -41,6 +41,7 @@ namespace ne
     StaticModel* LoadStaticModel(const std::string &path);
     AnimatedModel* LoadAnimatedModel(const std::string &path);
     AnimatedMesh* LoadAnimatedMesh(const std::string& path);
+    Animation* LoadAnimation(const std::string& path);
     Skeleton* LoadSkeleton(const std::string& path);
     Texture* LoadTexture(const std::string &path, enum TextureFormat format);
 
