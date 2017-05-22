@@ -160,10 +160,11 @@ namespace ne
         std::string path(str.C_Str());
         lambert = LoadTexture(path, TextureFormat::Color);
       }
-      if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
+      //TODO - don't cheat to load normals
+      if(material->GetTextureCount(aiTextureType_AMBIENT) > 0)
       {
         aiString str;
-        material->GetTexture(aiTextureType_NORMALS, 0, &str);
+        material->GetTexture(aiTextureType_AMBIENT, 0, &str);
         std::string path(str.C_Str());
         normal = LoadTexture(path, TextureFormat::Normal);
       }
