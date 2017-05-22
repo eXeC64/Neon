@@ -588,10 +588,11 @@ bool bakeAnimation(const std::string& outFile, const std::string& path, const st
 
 int main(int argc, char** argv)
 {
-  bakeSkeleton("cowboy.skel", "meshes/cowboy.dae", "Armature");
+  /* bakeSkeleton("cowboy.skel", "meshes/cowboy.dae", "Armature"); */
+  bakeStaticMesh("max.mesh", "meshes/max.dae", "Cube");
   /* bakeStaticMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube"); */
-  bakeSkeletelMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube", "cowboy.skel");
-  bakeAnimation("cowboy_run.anim", "meshes/cowboy.dae", "Armature", "cowboy.skel");
+  /* bakeSkeletelMesh("cowboy.mesh", "meshes/cowboy.dae", "Cube", "cowboy.skel"); */
+  /* bakeAnimation("cowboy_run.anim", "meshes/cowboy.dae", "Armature", "cowboy.skel"); */
   return 0;
 }
 

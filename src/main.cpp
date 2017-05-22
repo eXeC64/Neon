@@ -124,6 +124,7 @@ int main(int argc, char **argv)
 
   ne::StaticModel *sponza = loader.LoadStaticModel("meshes/sponza.obj");
   ne::StaticModel *nanosuit = loader.LoadStaticModel("meshes/nanosuit.obj");
+  ne::StaticMesh *max = loader.LoadBakedStaticMesh("max.mesh");
   ne::AnimatedMesh *cowboy = loader.LoadAnimatedMesh("cowboy.mesh");
   ne::Skeleton *cowboySkel = loader.LoadSkeleton("cowboy.skel");
   ne::Animation *runAnim = loader.LoadAnimation("cowboy_run.anim");
@@ -160,13 +161,12 @@ int main(int argc, char **argv)
     for(size_t i = 0; i < sponza->m_meshes.size(); ++i)
       pRenderer->AddStaticMesh(sponza->m_meshes[i], sponza->m_materials[i], glm::mat4(1.0));
 
+
     {
-      float scale = 0.13;
-      float rot = 90.0;
-      glm::mat4 nanoScale = glm::scale(glm::mat4(1), glm::vec3(scale));
-      glm::mat4 nanoRot = glm::rotate(glm::mat4(1), glm::radians(rot), glm::vec3(0,1,0));
-      /* for(size_t i = 0; i < nanosuit->m_meshes.size(); ++i) */
-        /* pRenderer->AddStaticMesh(nanosuit->m_meshes[i], nanosuit->m_materials[i], nanoScale * nanoRot); */
+      glm::mat4 rot = glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(1,0,0));
+      glm::mat4 pos = glm::translate(glm::mat4(1), glm::vec3(3.0, 0.1, 0.0));
+      glm::mat4 scl = glm::scale(glm::mat4(1), glm::vec3(0.75));
+      pRenderer->AddStaticMesh(max, nullptr, scl * pos * rot);
     }
 
     {
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 
       static bool drawMesh = true;
       static bool drawSpheres = true;
-      static bool play = false;
+      static bool play = true;
       ImGui::Checkbox("Draw mesh", &drawMesh);
       ImGui::Checkbox("Draw joints", &drawSpheres);
       ImGui::Checkbox("Play", &play);
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
     static bool debugMenu = false;
     static bool positionOverlay = false;
     static bool fpsOverlay = false;
-    static bool lightsMenu = false;
+    static bool lightsMenu = true;
     static bool sun = false;
     static float sunStrength = 0.5;
     static glm::vec3 sunDir(1,2,1);
