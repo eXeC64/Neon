@@ -44,6 +44,7 @@ namespace ne
     Animation* LoadAnimation(const std::string& path);
     Skeleton* LoadSkeleton(const std::string& path);
     Texture* LoadTexture(const std::string &path, enum TextureFormat format);
+    StaticMesh* LoadBakedStaticMesh(const std::string& path);
 
   private:
     void ProcessModelNode(StaticModel* model, const aiScene* scene, const aiNode* node);

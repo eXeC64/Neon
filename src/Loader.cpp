@@ -242,6 +242,65 @@ namespace ne
     return skel;
   }
 
+  StaticMesh* Loader::LoadBakedStaticMesh(const std::string& path)
+  {
+    std::ifstream in(path);
+
+    if(!in.good())
+      return nullptr;
+
+    const char flags = readU8(in);
+
+    //Check whether this is a static mesh
+    if(flags & 1)
+      return nullptr;
+
+    const size_t numVerts = readU32(in);
+    const size_t numIndices = readU32(in);
+
+    std::vector<GLfloat> vertexData(16 * numVerts);
+    std::vector<GLuint> indexData(numIndices);
+
+    //Load all the vertex data in one go
+    readBytes(in, (char*)&vertexData[0], 8 * sizeof(GLfloat) * numVerts);
+
+    //Load all the index data in one go
+    readBytes(in, (char*)&indexData[0], 4 * numIndices);
+
+    StaticMesh* pMesh = new StaticMesh();
+    pMesh->m_iNumTris = numVerts / 3;
+    pMesh->m_iNumIndices = numIndices;
+    pMesh->m_iStride = 8 * sizeof(GLfloat);
+    pMesh->m_iOffPos = 0 * sizeof(GLfloat);
+    pMesh->m_iOffNormal = 3 * sizeof(GLfloat);
+    pMesh->m_iOffUV = 6 * sizeof(GLfloat);
+
+    glGenVertexArrays(1, &pMesh->m_vaoConfig);
+    glGenBuffers(1, &pMesh->m_vboVertices);
+    glGenBuffers(1, &pMesh->m_vboIndices);
+
+    glBindVertexArray(pMesh->m_vaoConfig);
+
+    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(GLfloat), &vertexData[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh->m_vboIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData.size() * sizeof(GLuint), &indexData[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, pMesh->m_vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffPos);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffUV);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, pMesh->m_iStride, (void*)pMesh->m_iOffNormal);
+
+    glBindVertexArray(0);
+
+    return pMesh;
+  }
+
   AnimatedMesh* Loader::LoadAnimatedMesh(const std::string& path)
   {
     std::ifstream in(path);
