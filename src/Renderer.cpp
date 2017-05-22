@@ -878,11 +878,7 @@ namespace ne
       lightProj * glm::lookAt(position, position + glm::vec3(0,0,-1), glm::vec3(0,-1,0))
     };
 
-    for(int i = 0; i < 6; ++i)
-    {
-      std::string name = "matLightPos[" + std::to_string(i) + "]";
-      glUniformMatrix4fv(glGetUniformLocation(m_shdCubeShadows, name.c_str()), 1, GL_FALSE, &lightTransforms[i][0][0]);
-    }
+    glUniformMatrix4fv(glGetUniformLocation(m_shdCubeShadows, "matLightPos"), 6, GL_FALSE, &lightTransforms[0][0][0]);
 
     glm::mat4 identity(1.0);
     glUniformMatrix4fv(glGetUniformLocation(m_shdCubeShadows, "matLightProj"), 1, GL_FALSE, &identity[0][0]);
@@ -911,11 +907,7 @@ namespace ne
 
     glUseProgram(m_shdAnimCubeShadows);
 
-    for(int i = 0; i < 6; ++i)
-    {
-      std::string name = "matLightPos[" + std::to_string(i) + "]";
-      glUniformMatrix4fv(glGetUniformLocation(m_shdAnimCubeShadows, name.c_str()), 1, GL_FALSE, &lightTransforms[i][0][0]);
-    }
+    glUniformMatrix4fv(glGetUniformLocation(m_shdAnimCubeShadows, "matLightPos"), 6, GL_FALSE, &lightTransforms[0][0][0]);
 
     glUniformMatrix4fv(glGetUniformLocation(m_shdAnimCubeShadows, "matLightProj"), 1, GL_FALSE, &identity[0][0]);
 
