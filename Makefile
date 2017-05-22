@@ -18,7 +18,7 @@ build/%.o: thirdparty/imgui/%.cpp
 	$(CXX) -o $@ -c $<
 
 baker: baker_src/main.cpp
-	$(CXX) -o $@ $^ -lassimp
+	$(CXX) -g -W -Wall -std=c++14 -o $@ $^ -lassimp
 
 clean:
 	$(RM) $(TARGET) $(OBJS)
