@@ -313,8 +313,16 @@ bool bakeStaticMesh(const std::string& outFile, const std::string& path, const s
     writeF32(outStream, mesh->mNormals[i].x);
     writeF32(outStream, mesh->mNormals[i].y);
     writeF32(outStream, mesh->mNormals[i].z);
-    writeF32(outStream, mesh->mTextureCoords[0][i].x);
-    writeF32(outStream, mesh->mTextureCoords[0][i].y);
+    if(mesh->mTextureCoords[0])
+    {
+      writeF32(outStream, mesh->mTextureCoords[0][i].x);
+      writeF32(outStream, mesh->mTextureCoords[0][i].y);
+    }
+    else
+    {
+      writeF32(outStream, 0.0);
+      writeF32(outStream, 0.0);
+    }
   }
   for(auto& index : indices)
     writeU32(outStream, index);
