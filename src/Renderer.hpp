@@ -75,6 +75,16 @@ namespace ne
     glm::vec3 color;
   };
 
+  struct FrameStats
+  {
+    double totalTime;
+    double geometryTime;
+    double lightingTime;
+    double shadowTime;
+    double compositeTime;
+    double debugTime;
+  };
+
   class Renderer
   {
   public:
@@ -101,6 +111,8 @@ namespace ne
     //Add debug output
     void AddDebugCube(glm::mat4 position, glm::vec3 color);
     void AddDebugSphere(glm::mat4 position, glm::vec3 color);
+
+    FrameStats LastFrameStats();
 
     //Add to current time value
     void AddTime(double dt);
@@ -158,6 +170,9 @@ namespace ne
     GLuint m_compositeFBO;
     GLuint m_texShadow;
     GLuint m_texShadowCube;
+    GLuint m_qryTimers[10]; //5 * 2 (double-buffered)
+    GLuint m_qryShadows[2];
+    double m_shadowTime;
     StaticMesh* m_pPlane;
     StaticMesh* m_pCube;
     StaticMesh* m_pSphere;

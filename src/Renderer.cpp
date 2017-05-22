@@ -31,6 +31,23 @@ namespace
   }
 
   const int MAX_BONES = 32;
+
+  enum queryTimers {
+    time_start_all,
+    time_start_all_prev,
+
+    time_start_light_pass,
+    time_start_light_pass_prev,
+
+    time_start_composite_pass,
+    time_start_composite_pass_prev,
+
+    time_start_debug_pass,
+    time_start_debug_pass_prev,
+
+    time_end_all,
+    time_end_all_prev,
+  };
 }
 
 namespace ne
@@ -69,6 +86,9 @@ namespace ne
     m_compositeFBO(0),
     m_texShadow(0),
     m_texShadowCube(0),
+    m_qryTimers{0,0,0,0,0,0,0,0,0,0},
+    m_qryShadows{0,0},
+    m_shadowTime(0),
     m_pPlane(nullptr),
     m_pCube(nullptr),
     m_pSphere(nullptr),
@@ -126,6 +146,10 @@ namespace ne
       glDeleteTextures(1, &m_texShadow);
     if(m_texShadowCube)
       glDeleteTextures(1, &m_texShadowCube);
+    if(m_qryTimers[0])
+      glDeleteQueries(sizeof(m_qryTimers) / sizeof(GLuint), m_qryTimers);
+    if(m_qryShadows)
+      glDeleteQueries(2, m_qryShadows);
     if(m_pPlane)
       delete m_pPlane;
     if(m_pCube)
@@ -329,6 +353,16 @@ namespace ne
     if(!m_pDefaultRoughness)
       return false;
 
+    const size_t numTimers = sizeof(m_qryTimers) / sizeof(GLuint);
+    glGenQueries(numTimers, m_qryTimers);
+    glGenQueries(2, m_qryShadows);
+
+    //Set some initial values to be pulled
+    for(size_t i = 0; i < numTimers; ++i)
+      glQueryCounter(m_qryTimers[i], GL_TIMESTAMP);
+    glQueryCounter(m_qryShadows[0], GL_TIMESTAMP);
+    glQueryCounter(m_qryShadows[1], GL_TIMESTAMP);
+
     m_bIsInit = true;
     return true;
   }
@@ -348,12 +382,16 @@ namespace ne
 
   void Renderer::EndFrame()
   {
+    glQueryCounter(m_qryTimers[time_start_all], GL_TIMESTAMP);
+
     //Prepare for geometry pass
     SetupGeometryPass();
 
     //Draw the geometry into the g buffers
     DrawStaticMeshes();
     DrawAnimatedMeshes();
+
+    glQueryCounter(m_qryTimers[time_start_light_pass], GL_TIMESTAMP);
 
     //Prepare for lighting pass
     SetupLightPass();
@@ -362,13 +400,18 @@ namespace ne
     ApplyGlobalIllumination();
 
     //Apply all our lights
+    m_shadowTime = 0.0; //Reset profiling
     DrawPointLights();
     DrawDirectionalLights();
     DrawSpotLights();
 
+    glQueryCounter(m_qryTimers[time_start_composite_pass], GL_TIMESTAMP);
+
     CompositeFrame();
 
     //TODO in future: final pass for transparent/translucent objects
+
+    glQueryCounter(m_qryTimers[time_start_debug_pass], GL_TIMESTAMP);
 
     SetupDebugPass();
     for (auto& cube : m_debugCubes)
@@ -376,7 +419,35 @@ namespace ne
     for (auto& sphere : m_debugSpheres)
       DrawDebugMesh(m_pSphere, sphere);
 
+    glQueryCounter(m_qryTimers[time_end_all], GL_TIMESTAMP);
+
+    //Swap the query timers around
+    std::swap(m_qryTimers[time_start_all], m_qryTimers[time_start_all_prev]);
+    std::swap(m_qryTimers[time_start_light_pass], m_qryTimers[time_start_light_pass_prev]);
+    std::swap(m_qryTimers[time_start_composite_pass], m_qryTimers[time_start_composite_pass_prev]);
+    std::swap(m_qryTimers[time_start_debug_pass], m_qryTimers[time_start_debug_pass_prev]);
+    std::swap(m_qryTimers[time_end_all], m_qryTimers[time_end_all_prev]);
+
     m_bIsMidFrame = false;
+  }
+
+  FrameStats Renderer::LastFrameStats()
+  {
+    FrameStats fs;
+    GLuint64 start_all, start_light, start_comp, start_debug, end_all;
+    glGetQueryObjectui64v(m_qryTimers[time_start_all_prev], GL_QUERY_RESULT, &start_all);
+    glGetQueryObjectui64v(m_qryTimers[time_start_light_pass_prev], GL_QUERY_RESULT, &start_light);
+    glGetQueryObjectui64v(m_qryTimers[time_start_composite_pass_prev], GL_QUERY_RESULT, &start_comp);
+    glGetQueryObjectui64v(m_qryTimers[time_start_debug_pass_prev], GL_QUERY_RESULT, &start_debug);
+    glGetQueryObjectui64v(m_qryTimers[time_end_all_prev], GL_QUERY_RESULT, &end_all);
+
+    fs.totalTime = double(end_all - start_all) / 1e6;
+    fs.geometryTime = double(start_light - start_all) / 1e6;
+    fs.lightingTime = double(start_comp - start_light) / 1e6;
+    fs.compositeTime = double(start_debug - start_comp) / 1e6;
+    fs.debugTime = double(end_all - start_debug) / 1e6;
+    fs.shadowTime = m_shadowTime;
+    return fs;
   }
 
   void Renderer::SetViewPosition(glm::vec3 pos, float yaw, float tilt)
@@ -553,11 +624,25 @@ namespace ne
     const GLint farPlaneLoc        = glGetUniformLocation(m_shdPointLight, "farPlane");
 
 
-    for(auto& light : m_pointLights)
+    for(size_t i = 0; i < m_pointLights.size(); ++i)
     {
+      const PointLight& light = m_pointLights[i];
+
       // First render shadow map
       const double nearPlane = 0.1, farPlane = 30.0;
+
+      if(i > 0)
+      {
+        //We've waited until the last possible moment now - retrieve the shadow query
+        GLuint64 shadow_start, shadow_end;
+        glGetQueryObjectui64v(m_qryShadows[0], GL_QUERY_RESULT, &shadow_start);
+        glGetQueryObjectui64v(m_qryShadows[1], GL_QUERY_RESULT, &shadow_end);
+        m_shadowTime += double(shadow_end - shadow_start) / 1e6;
+      }
+
+      glQueryCounter(m_qryShadows[0], GL_TIMESTAMP);
       DrawPointShadowMap(light.pos, nearPlane, farPlane);
+      glQueryCounter(m_qryShadows[1], GL_TIMESTAMP);
       glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
 
       // Now render lighting shader
@@ -595,6 +680,16 @@ namespace ne
       glBindVertexArray(m_pPlane->m_vaoConfig);
       glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
       glBindVertexArray(0);
+
+    }
+
+    if(!m_pointLights.empty())
+    {
+      //We've waited until the last possible moment now - retrieve the shadow query
+      GLuint64 shadow_start, shadow_end;
+      glGetQueryObjectui64v(m_qryShadows[0], GL_QUERY_RESULT, &shadow_start);
+      glGetQueryObjectui64v(m_qryShadows[1], GL_QUERY_RESULT, &shadow_end);
+      m_shadowTime += double(shadow_end - shadow_start) / 1e6;
     }
   }
 
@@ -654,15 +749,30 @@ namespace ne
     const GLint nearPlaneLoc       = glGetUniformLocation(m_shdSpotLight, "nearPlane");
     const GLint farPlaneLoc        = glGetUniformLocation(m_shdSpotLight, "farPlane");
 
-    for(auto& light : m_spotLights)
+    for(size_t i = 0; i < m_spotLights.size(); ++i)
     {
+      const SpotLight& light = m_spotLights[i];
+
       //First render shadow map
       const double nearPlane = 0.1, farPlane = 30.0;
       const glm::mat4 lightProj = glm::perspective(light.outerAngle * 2.0, 1.0, nearPlane, farPlane);
       const glm::mat4 lightView = glm::lookAt(light.pos, light.pos + light.dir, glm::vec3(0,1,0));
       const glm::mat4 lightSpace = lightProj * lightView;
 
+      if(i > 0)
+      {
+        //We've waited until the last possible moment now - retrieve the shadow query
+        GLuint64 shadow_start, shadow_end;
+        glGetQueryObjectui64v(m_qryShadows[0], GL_QUERY_RESULT, &shadow_start);
+        glGetQueryObjectui64v(m_qryShadows[1], GL_QUERY_RESULT, &shadow_end);
+        m_shadowTime += double(shadow_end - shadow_start) / 1e6;
+      }
+
+      glQueryCounter(m_qryShadows[0], GL_TIMESTAMP);
       DrawSpotShadowMap(lightSpace);
+      glQueryCounter(m_qryShadows[1], GL_TIMESTAMP);
+
+      glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
       glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
 
       // Now render lighting shader
@@ -704,6 +814,16 @@ namespace ne
       glBindVertexArray(m_pPlane->m_vaoConfig);
       glDrawArrays(GL_TRIANGLES, 0, m_pPlane->m_iNumTris*3);
       glBindVertexArray(0);
+
+    }
+
+    if(!m_spotLights.empty())
+    {
+      //We've waited until the last possible moment now - retrieve the shadow query
+      GLuint64 shadow_start, shadow_end;
+      glGetQueryObjectui64v(m_qryShadows[0], GL_QUERY_RESULT, &shadow_start);
+      glGetQueryObjectui64v(m_qryShadows[1], GL_QUERY_RESULT, &shadow_end);
+      m_shadowTime += double(shadow_end - shadow_start) / 1e6;
     }
   }
 

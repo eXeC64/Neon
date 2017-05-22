@@ -222,6 +222,7 @@ int main(int argc, char **argv)
     static bool debugMenu = false;
     static bool positionOverlay = false;
     static bool fpsOverlay = false;
+    static bool profiler = true;
     static bool lightsMenu = true;
     static bool sun = false;
     static float sunStrength = 0.5;
@@ -250,6 +251,10 @@ int main(int argc, char **argv)
         ImGui::MenuItem("Lights", NULL, lightsMenu);
         if(ImGui::IsItemClicked())
           lightsMenu = !lightsMenu;
+
+        ImGui::MenuItem("Profiler", NULL, profiler);
+        if(ImGui::IsItemClicked())
+          profiler = !profiler;
 
         ImGui::EndMenu();
       }
@@ -286,6 +291,19 @@ int main(int argc, char **argv)
                          |ImGuiWindowFlags_NoSavedSettings);
       ImGui::Text("Camera Position: %8.3f %8.3f %8.3f", cameraPos.x, cameraPos.y, cameraPos.z);
       ImGui::Text(" Light Position: %8.3f %8.3f %8.3f", lightPos.x, lightPos.y, lightPos.z);
+      ImGui::End();
+    }
+
+    if(profiler)
+    {
+      ne::FrameStats fs = pRenderer->LastFrameStats();
+      ImGui::Begin("Profiler", &profiler, ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::LabelText("Total Time", "%f", fs.totalTime);
+      ImGui::LabelText("Geometry Time", "%f", fs.geometryTime);
+      ImGui::LabelText("Lighting Time", "%f", fs.lightingTime);
+      ImGui::LabelText("Shadow Time", "%f", fs.shadowTime);
+      ImGui::LabelText("Composite Time", "%f", fs.compositeTime);
+      ImGui::LabelText("Debug Time", "%f", fs.debugTime);
       ImGui::End();
     }
 
