@@ -403,7 +403,7 @@ namespace ne
 
   void Renderer::AddStaticMesh(StaticMesh *pMesh, Material *pMat, glm::mat4 matPosition)
   {
-    if(!pMesh || !pMat || !m_bIsMidFrame)
+    if(!pMesh || !m_bIsMidFrame)
       return;
 
     m_staticMeshes.push_back(StaticMeshInstance(pMesh, pMat, matPosition));
@@ -432,19 +432,19 @@ namespace ne
     {
       glUniformMatrix4fv(matPosLoc, 1, GL_FALSE, &model.pos[0][0]);
 
-      Texture *pLambert = model.mat->m_pLambert;
+      Texture *pLambert = model.mat ? model.mat->m_pLambert : nullptr;
       if(!pLambert)
         pLambert = m_pDefaultLambert;
 
-      Texture *pNormal = model.mat->m_pNormal;
+      Texture *pNormal = model.mat ? model.mat->m_pNormal : nullptr;
       if(!pNormal)
         pNormal = m_pDefaultNormal;
 
-      Texture *pMetallic = model.mat->m_pMetallic;
+      Texture *pMetallic = model.mat ? model.mat->m_pMetallic : nullptr;
       if(!pMetallic)
         pMetallic = m_pDefaultMetallic;
 
-      Texture *pRoughness = model.mat->m_pRoughness;
+      Texture *pRoughness = model.mat ? model.mat->m_pRoughness : nullptr;
       if(!pRoughness)
         pRoughness = m_pDefaultRoughness;
 
