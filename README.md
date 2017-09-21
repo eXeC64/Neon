@@ -3,6 +3,8 @@ Neon
 
 Neon is a toy 3D rendering engine that I'm working on.
 
+![Screenshot](https://i.imgur.com/UdsxV3I.jpg)
+
 Plan:
 
  * [x] Deferred shading
